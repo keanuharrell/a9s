@@ -22,10 +22,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: 'stable'  # Go 1.24.6 (August 2025)
           
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v3.4.0  # Latest v3 release
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -36,10 +36,10 @@ jobs:
           sudo snap install snapcraft --classic
           
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: latest
+          version: v2.11.2  # Latest stable GoReleaser LTS (July 2025)
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

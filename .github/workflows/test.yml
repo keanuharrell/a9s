@@ -15,7 +15,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: 'stable'  # Go 1.24.6 (August 2025)
         
     - name: Cache Go modules
       uses: actions/cache@v3
@@ -59,7 +59,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: 'stable'  # Go 1.24.6 (August 2025)
         
     - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
       env:
@@ -76,7 +76,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: 'stable'  # Go 1.24.6 (August 2025)
         
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
