@@ -216,7 +216,7 @@ func (m *S3Model) showBucketDetails() tea.Cmd {
 		details += fmt.Sprintf("\n🧹 Cleanup Recommended: %s\n", bucket.CleanupReason)
 	}
 	
-	return tea.Printf(details)
+	return tea.Printf("%s", details)
 }
 
 func (m *S3Model) confirmDeleteBucket() tea.Cmd {

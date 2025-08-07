@@ -208,5 +208,5 @@ func (m *IAMModel) showRoleDetails() tea.Cmd {
 		details += fmt.Sprintf("  • %s\n", policy)
 	}
 	
-	return tea.Printf(details)
+	return tea.Printf("%s", details)
 }
