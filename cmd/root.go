@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/keanuharrell/a9s/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +35,10 @@ Usage:
   a9s [cmd]    Run specific CLI commands`,
 	Version: "0.1.0",
 	Run: func(cmd *cobra.Command, args []string) {
-		runTUI()
+		if err := runTUI(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -42,6 +47,23 @@ func Execute() {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func runTUI() error {
+	model := tui.NewModel(awsProfile, awsRegion)
+	
+	program := tea.NewProgram(
+		model,
+		tea.WithAltScreen(),
+		tea.WithMouseCellMotion(),
+	)
+	
+	_, err := program.Run()
+	if err != nil {
+		return fmt.Errorf("error running TUI: %w", err)
+	}
+	
+	return nil
 }
 
 func init() {

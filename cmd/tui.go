@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/keanuharrell/a9s/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -35,19 +31,3 @@ func init() {
 	rootCmd.AddCommand(tuiCmd)
 }
 
-func runTUI() error {
-	model := tui.NewModel(awsProfile, awsRegion)
-	
-	program := tea.NewProgram(
-		model,
-		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
-	)
-	
-	_, err := program.Run()
-	if err != nil {
-		return fmt.Errorf("error running TUI: %w", err)
-	}
-	
-	return nil
-}

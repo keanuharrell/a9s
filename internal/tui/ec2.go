@@ -11,12 +11,11 @@ import (
 )
 
 type EC2Model struct {
-	table       table.Model
-	instances   []aws.EC2Instance
-	awsService  *aws.EC2Service
-	loading     bool
-	err         error
-	selectedRow int
+	table      table.Model
+	instances  []aws.EC2Instance
+	awsService *aws.EC2Service
+	loading    bool
+	err        error
 }
 
 type ec2LoadedMsg struct {

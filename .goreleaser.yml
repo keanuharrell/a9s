@@ -1,4 +1,4 @@
-version: 1
+version: 2
 
 before:
   hooks:
@@ -54,8 +54,7 @@ brews:
     repository:
       owner: keanuharrell
       name: homebrew-a9s
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    folder: Formula
+      token: "{{ .Env.GITHUB_TOKEN }}"
     homepage: "https://github.com/keanuharrell/a9s"
     description: "🚀 The k9s for AWS - Interactive Terminal UI"
     license: "MIT"
@@ -99,7 +98,7 @@ nix:
     repository:
       owner: keanuharrell
       name: nur-a9s
-      token: "{{ .Env.NIX_GITHUB_TOKEN }}"
+      token: "{{ .Env.GITHUB_TOKEN }}"
     homepage: "https://github.com/keanuharrell/a9s"
     description: "Interactive Terminal UI for AWS infrastructure management"
     license: "mit"
