@@ -1,7 +1,7 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git ca-certificates
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o infrabrew .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -o a9s .
 
 # Final stage
 FROM alpine:latest
@@ -19,6 +19,6 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=builder /app/infrabrew .
+COPY --from=builder /app/a9s .
 
-ENTRYPOINT ["./infrabrew"]
+ENTRYPOINT ["./a9s"]

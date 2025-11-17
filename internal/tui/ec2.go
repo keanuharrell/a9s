@@ -32,13 +32,13 @@ func NewEC2Model(profile, region string) *EC2Model {
 		{Title: "Public IP", Width: 15},
 		{Title: "AZ", Width: 15},
 	}
-	
+
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithFocused(true),
 		table.WithHeight(15),
 	)
-	
+
 	s := table.DefaultStyles()
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
@@ -50,9 +50,9 @@ func NewEC2Model(profile, region string) *EC2Model {
 		Background(lipgloss.Color("57")).
 		Bold(false)
 	t.SetStyles(s)
-	
+
 	awsService, _ := aws.NewEC2Service(profile, region)
-	
+
 	return &EC2Model{
 		table:      t,
 		awsService: awsService,
@@ -66,7 +66,7 @@ func (m *EC2Model) Init() tea.Cmd {
 
 func (m *EC2Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -83,7 +83,7 @@ func (m *EC2Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.stopInstance()
 			}
 		}
-		
+
 	case ec2LoadedMsg:
 		m.loading = false
 		m.err = msg.err
@@ -93,7 +93,7 @@ func (m *EC2Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
-	
+
 	m.table, cmd = m.table.Update(msg)
 	return m, cmd
 }
@@ -104,19 +104,19 @@ func (m *EC2Model) View() string {
 			Foreground(lipgloss.Color("205")).
 			Render("Loading EC2 instances...")
 	}
-	
+
 	if m.err != nil {
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
 			Render(fmt.Sprintf("Error loading instances: %v", m.err))
 	}
-	
+
 	if len(m.instances) == 0 {
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
 			Render("No EC2 instances found in this region")
 	}
-	
+
 	summary := fmt.Sprintf("📦 %d instances", len(m.instances))
 	running := 0
 	stopped := 0
@@ -128,16 +128,16 @@ func (m *EC2Model) View() string {
 			stopped++
 		}
 	}
-	
+
 	if running > 0 {
 		summary += fmt.Sprintf(" • ✅ %d running", running)
 	}
 	if stopped > 0 {
 		summary += fmt.Sprintf(" • ⏹️ %d stopped", stopped)
 	}
-	
+
 	help := "\n💡 [↑↓] navigate • [enter] details • [s] start • [t] stop • [r] refresh"
-	
+
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		lipgloss.NewStyle().Foreground(lipgloss.Color("110")).Render(summary),
@@ -159,7 +159,7 @@ func (m *EC2Model) loadInstances() tea.Cmd {
 				err:       fmt.Errorf("AWS service not initialized"),
 			}
 		}
-		
+
 		ctx := context.Background()
 		instances, err := m.awsService.ListInstances(ctx)
 		return ec2LoadedMsg{
@@ -171,7 +171,7 @@ func (m *EC2Model) loadInstances() tea.Cmd {
 
 func (m *EC2Model) updateTable() {
 	var rows []table.Row
-	
+
 	for _, instance := range m.instances {
 		state := instance.State
 		switch state {
@@ -184,12 +184,12 @@ func (m *EC2Model) updateTable() {
 		case "stopping":
 			state = "🟠 " + state
 		}
-		
+
 		publicIP := instance.PublicIP
 		if publicIP == "" {
 			publicIP = "-"
 		}
-		
+
 		rows = append(rows, table.Row{
 			instance.ID,
 			instance.Name,
@@ -199,7 +199,7 @@ func (m *EC2Model) updateTable() {
 			instance.AZ,
 		})
 	}
-	
+
 	m.table.SetRows(rows)
 }
 
@@ -207,9 +207,9 @@ func (m *EC2Model) showInstanceDetails() tea.Cmd {
 	if m.table.Cursor() >= len(m.instances) {
 		return nil
 	}
-	
+
 	instance := m.instances[m.table.Cursor()]
-	
+
 	return tea.Printf("Instance Details:\nID: %s\nName: %s\nType: %s\nState: %s\nPublic IP: %s\nPrivate IP: %s\nAZ: %s\nLaunch Time: %s\n",
 		instance.ID, instance.Name, instance.Type, instance.State,
 		instance.PublicIP, instance.PrivateIP, instance.AZ, instance.LaunchTime)
@@ -219,14 +219,14 @@ func (m *EC2Model) startInstance() tea.Cmd {
 	if m.table.Cursor() >= len(m.instances) {
 		return nil
 	}
-	
+
 	instance := m.instances[m.table.Cursor()]
-	
+
 	if instance.State == "running" {
 		return tea.Printf("Instance %s is already running", instance.ID)
 	}
-	
-	return tea.Printf("🚀 Starting instance %s (%s)...\nNote: This is a demo - actual start command would be implemented here", 
+
+	return tea.Printf("🚀 Starting instance %s (%s)...\nNote: This is a demo - actual start command would be implemented here",
 		instance.ID, instance.Name)
 }
 
@@ -234,13 +234,13 @@ func (m *EC2Model) stopInstance() tea.Cmd {
 	if m.table.Cursor() >= len(m.instances) {
 		return nil
 	}
-	
+
 	instance := m.instances[m.table.Cursor()]
-	
+
 	if instance.State == "stopped" {
 		return tea.Printf("Instance %s is already stopped", instance.ID)
 	}
-	
-	return tea.Printf("⏹️ Stopping instance %s (%s)...\nNote: This is a demo - actual stop command would be implemented here", 
+
+	return tea.Printf("⏹️ Stopping instance %s (%s)...\nNote: This is a demo - actual stop command would be implemented here",
 		instance.ID, instance.Name)
 }

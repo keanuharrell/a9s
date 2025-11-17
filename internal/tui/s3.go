@@ -11,11 +11,11 @@ import (
 )
 
 type S3Model struct {
-	table          table.Model
-	cleanupResult  *aws.S3CleanupResult
-	awsService     *aws.S3Service
-	loading        bool
-	err            error
+	table         table.Model
+	cleanupResult *aws.S3CleanupResult
+	awsService    *aws.S3Service
+	loading       bool
+	err           error
 }
 
 type s3LoadedMsg struct {
@@ -33,13 +33,13 @@ func NewS3Model(profile, region string) *S3Model {
 		{Title: "Tagged", Width: 8},
 		{Title: "Cleanup", Width: 8},
 	}
-	
+
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithFocused(true),
 		table.WithHeight(15),
 	)
-	
+
 	s := table.DefaultStyles()
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
@@ -51,9 +51,9 @@ func NewS3Model(profile, region string) *S3Model {
 		Background(lipgloss.Color("57")).
 		Bold(false)
 	t.SetStyles(s)
-	
+
 	awsService, _ := aws.NewS3Service(profile, region)
-	
+
 	return &S3Model{
 		table:      t,
 		awsService: awsService,
@@ -67,7 +67,7 @@ func (m *S3Model) Init() tea.Cmd {
 
 func (m *S3Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -80,7 +80,7 @@ func (m *S3Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.confirmDeleteBucket()
 			}
 		}
-		
+
 	case s3LoadedMsg:
 		m.loading = false
 		m.err = msg.err
@@ -90,7 +90,7 @@ func (m *S3Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
-	
+
 	m.table, cmd = m.table.Update(msg)
 	return m, cmd
 }
@@ -101,19 +101,19 @@ func (m *S3Model) View() string {
 			Foreground(lipgloss.Color("205")).
 			Render("Loading S3 buckets and analyzing cleanup candidates...")
 	}
-	
+
 	if m.err != nil {
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
 			Render(fmt.Sprintf("Error loading S3 data: %v", m.err))
 	}
-	
+
 	if m.cleanupResult == nil || len(m.cleanupResult.Buckets) == 0 {
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
 			Render("No S3 buckets found")
 	}
-	
+
 	summary := fmt.Sprintf("🪣 %d buckets", m.cleanupResult.Summary.TotalBuckets)
 	if m.cleanupResult.Summary.EmptyBuckets > 0 {
 		summary += fmt.Sprintf(" • 📭 %d empty", m.cleanupResult.Summary.EmptyBuckets)
@@ -124,9 +124,9 @@ func (m *S3Model) View() string {
 	if len(m.cleanupResult.CleanupCandidates) > 0 {
 		summary += fmt.Sprintf(" • 🧹 %d cleanup candidates", len(m.cleanupResult.CleanupCandidates))
 	}
-	
+
 	help := "\n💡 [↑↓] navigate • [enter] bucket details • [d] delete bucket • [r] refresh"
-	
+
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		lipgloss.NewStyle().Foreground(lipgloss.Color("110")).Render(summary),
@@ -148,7 +148,7 @@ func (m *S3Model) loadBuckets() tea.Cmd {
 				err:    fmt.Errorf("AWS S3 service not initialized"),
 			}
 		}
-		
+
 		ctx := context.Background()
 		result, err := m.awsService.AnalyzeBuckets(ctx)
 		return s3LoadedMsg{
@@ -162,30 +162,30 @@ func (m *S3Model) updateTable() {
 	if m.cleanupResult == nil {
 		return
 	}
-	
+
 	var rows []table.Row
-	
+
 	for _, bucket := range m.cleanupResult.Buckets {
 		public := "🔒 No"
 		if bucket.IsPublic {
 			public = "🌐 Yes"
 		}
-		
+
 		tagged := "❌ No"
 		if bucket.HasTags {
 			tagged = "✅ Yes"
 		}
-		
+
 		cleanup := "❌ No"
 		if bucket.ShouldCleanup {
 			cleanup = "⚠️ Yes"
 		}
-		
+
 		objectCount := fmt.Sprintf("%d", bucket.ObjectCount)
 		if bucket.IsEmpty {
 			objectCount = "📭 0"
 		}
-		
+
 		rows = append(rows, table.Row{
 			bucket.Name,
 			bucket.Region,
@@ -196,7 +196,7 @@ func (m *S3Model) updateTable() {
 			cleanup,
 		})
 	}
-	
+
 	m.table.SetRows(rows)
 }
 
@@ -204,18 +204,18 @@ func (m *S3Model) showBucketDetails() tea.Cmd {
 	if m.cleanupResult == nil || m.table.Cursor() >= len(m.cleanupResult.Buckets) {
 		return nil
 	}
-	
+
 	bucket := m.cleanupResult.Buckets[m.table.Cursor()]
-	
+
 	details := fmt.Sprintf("S3 Bucket Details:\nName: %s\nRegion: %s\nCreated: %s\nObject Count: %d\nSize: %s\nPublic: %v\nTagged: %v\n",
 		bucket.Name, bucket.Region, bucket.CreatedDate,
 		bucket.ObjectCount, formatBytes(bucket.SizeBytes),
 		bucket.IsPublic, bucket.HasTags)
-	
+
 	if bucket.ShouldCleanup {
 		details += fmt.Sprintf("\n🧹 Cleanup Recommended: %s\n", bucket.CleanupReason)
 	}
-	
+
 	return tea.Printf("%s", details)
 }
 
@@ -223,10 +223,10 @@ func (m *S3Model) confirmDeleteBucket() tea.Cmd {
 	if m.cleanupResult == nil || m.table.Cursor() >= len(m.cleanupResult.Buckets) {
 		return nil
 	}
-	
+
 	bucket := m.cleanupResult.Buckets[m.table.Cursor()]
-	
-	return tea.Printf("⚠️ Delete Bucket Confirmation\nBucket: %s\nObjects: %d\n\nNote: This is a demo - actual delete would require confirmation dialog\nUse the CLI with --dry-run for safe testing", 
+
+	return tea.Printf("⚠️ Delete Bucket Confirmation\nBucket: %s\nObjects: %d\n\nNote: This is a demo - actual delete would require confirmation dialog\nUse the CLI with --dry-run for safe testing",
 		bucket.Name, bucket.ObjectCount)
 }
 

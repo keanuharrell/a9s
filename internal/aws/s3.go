@@ -16,22 +16,22 @@ import (
 )
 
 type S3CleanupResult struct {
-	Buckets         []S3BucketInfo `json:"buckets"`
+	Buckets           []S3BucketInfo `json:"buckets"`
 	CleanupCandidates []S3BucketInfo `json:"cleanup_candidates"`
-	Summary         S3Summary      `json:"summary"`
+	Summary           S3Summary      `json:"summary"`
 }
 
 type S3BucketInfo struct {
-	Name         string    `json:"name"`
-	Region       string    `json:"region"`
-	CreatedDate  string    `json:"created_date"`
-	IsEmpty      bool      `json:"is_empty"`
-	IsPublic     bool      `json:"is_public"`
-	HasTags      bool      `json:"has_tags"`
-	ObjectCount  int       `json:"object_count"`
-	SizeBytes    int64     `json:"size_bytes"`
-	ShouldCleanup bool     `json:"should_cleanup"`
-	CleanupReason string   `json:"cleanup_reason,omitempty"`
+	Name          string `json:"name"`
+	Region        string `json:"region"`
+	CreatedDate   string `json:"created_date"`
+	IsEmpty       bool   `json:"is_empty"`
+	IsPublic      bool   `json:"is_public"`
+	HasTags       bool   `json:"has_tags"`
+	ObjectCount   int    `json:"object_count"`
+	SizeBytes     int64  `json:"size_bytes"`
+	ShouldCleanup bool   `json:"should_cleanup"`
+	CleanupReason string `json:"cleanup_reason,omitempty"`
 }
 
 type S3Summary struct {
@@ -48,22 +48,22 @@ type S3Service struct {
 
 func NewS3Service(profile, region string) (*S3Service, error) {
 	ctx := context.Background()
-	
+
 	var opts []func(*config.LoadOptions) error
-	
+
 	if region != "" {
 		opts = append(opts, config.WithRegion(region))
 	}
-	
+
 	if profile != "" {
 		opts = append(opts, config.WithSharedConfigProfile(profile))
 	}
-	
+
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	
+
 	return &S3Service{
 		client: s3.NewFromConfig(cfg),
 	}, nil
@@ -74,7 +74,7 @@ func (s *S3Service) AnalyzeBuckets(ctx context.Context) (*S3CleanupResult, error
 	if err != nil {
 		return nil, fmt.Errorf("failed to list buckets: %w", err)
 	}
-	
+
 	result := &S3CleanupResult{
 		Buckets:           []S3BucketInfo{},
 		CleanupCandidates: []S3BucketInfo{},
@@ -82,28 +82,28 @@ func (s *S3Service) AnalyzeBuckets(ctx context.Context) (*S3CleanupResult, error
 			CleanupCandidates: []string{},
 		},
 	}
-	
+
 	for _, bucket := range bucketsOutput.Buckets {
 		bucketInfo := S3BucketInfo{
 			Name: aws.ToString(bucket.Name),
 		}
-		
+
 		if bucket.CreationDate != nil {
 			bucketInfo.CreatedDate = bucket.CreationDate.Format("2006-01-02")
 		}
-		
+
 		bucketInfo.Region = s.getBucketRegion(ctx, aws.ToString(bucket.Name))
-		
-		bucketInfo.IsEmpty, bucketInfo.ObjectCount, bucketInfo.SizeBytes = 
+
+		bucketInfo.IsEmpty, bucketInfo.ObjectCount, bucketInfo.SizeBytes =
 			s.getBucketStats(ctx, aws.ToString(bucket.Name))
-		
+
 		bucketInfo.IsPublic = s.isBucketPublic(ctx, aws.ToString(bucket.Name))
-		
+
 		bucketInfo.HasTags = s.hasTags(ctx, aws.ToString(bucket.Name))
-		
-		bucketInfo.ShouldCleanup, bucketInfo.CleanupReason = 
+
+		bucketInfo.ShouldCleanup, bucketInfo.CleanupReason =
 			s.shouldCleanup(bucketInfo)
-		
+
 		if bucketInfo.IsEmpty {
 			result.Summary.EmptyBuckets++
 		}
@@ -113,18 +113,18 @@ func (s *S3Service) AnalyzeBuckets(ctx context.Context) (*S3CleanupResult, error
 		if !bucketInfo.HasTags {
 			result.Summary.UntaggedBuckets++
 		}
-		
+
 		if bucketInfo.ShouldCleanup {
 			result.CleanupCandidates = append(result.CleanupCandidates, bucketInfo)
 			result.Summary.CleanupCandidates = append(
 				result.Summary.CleanupCandidates, bucketInfo.Name)
 		}
-		
+
 		result.Buckets = append(result.Buckets, bucketInfo)
 	}
-	
+
 	result.Summary.TotalBuckets = len(result.Buckets)
-	
+
 	return result, nil
 }
 
@@ -135,7 +135,7 @@ func (s *S3Service) getBucketRegion(ctx context.Context, bucketName string) stri
 	if err != nil {
 		return "unknown"
 	}
-	
+
 	if location.LocationConstraint == "" {
 		return "us-east-1"
 	}
@@ -145,28 +145,28 @@ func (s *S3Service) getBucketRegion(ctx context.Context, bucketName string) stri
 func (s *S3Service) getBucketStats(ctx context.Context, bucketName string) (bool, int, int64) {
 	var objectCount int
 	var totalSize int64
-	
+
 	paginator := s3.NewListObjectsV2Paginator(s.client, &s3.ListObjectsV2Input{
 		Bucket:  aws.String(bucketName),
 		MaxKeys: aws.Int32(1000),
 	})
-	
+
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
 			return false, 0, 0
 		}
-		
+
 		objectCount += len(page.Contents)
 		for _, obj := range page.Contents {
 			totalSize += aws.ToInt64(obj.Size)
 		}
-		
+
 		if objectCount > 100 {
 			break
 		}
 	}
-	
+
 	return objectCount == 0, objectCount, totalSize
 }
 
@@ -174,7 +174,7 @@ func (s *S3Service) isBucketPublic(ctx context.Context, bucketName string) bool 
 	_, err := s.client.GetPublicAccessBlock(ctx, &s3.GetPublicAccessBlockInput{
 		Bucket: aws.String(bucketName),
 	})
-	
+
 	return err != nil
 }
 
@@ -182,29 +182,29 @@ func (s *S3Service) hasTags(ctx context.Context, bucketName string) bool {
 	tags, err := s.client.GetBucketTagging(ctx, &s3.GetBucketTaggingInput{
 		Bucket: aws.String(bucketName),
 	})
-	
+
 	return err == nil && len(tags.TagSet) > 0
 }
 
 func (s *S3Service) shouldCleanup(bucket S3BucketInfo) (bool, string) {
 	var reasons []string
-	
+
 	if bucket.IsEmpty {
 		reasons = append(reasons, "empty")
 	}
-	
+
 	if bucket.IsPublic && !bucket.HasTags {
 		reasons = append(reasons, "public without tags")
 	}
-	
+
 	if !bucket.HasTags && bucket.ObjectCount < 10 {
 		reasons = append(reasons, "untagged with few objects")
 	}
-	
+
 	if len(reasons) > 0 {
 		return true, strings.Join(reasons, ", ")
 	}
-	
+
 	return false, ""
 }
 
@@ -215,7 +215,7 @@ func (s *S3Service) DeleteBucket(ctx context.Context, bucketName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to list objects: %w", err)
 	}
-	
+
 	if len(objects.Contents) > 0 {
 		var objectIds []types.ObjectIdentifier
 		for _, object := range objects.Contents {
@@ -223,7 +223,7 @@ func (s *S3Service) DeleteBucket(ctx context.Context, bucketName string) error {
 				Key: object.Key,
 			})
 		}
-		
+
 		_, err = s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
 			Bucket: aws.String(bucketName),
 			Delete: &types.Delete{
@@ -234,14 +234,14 @@ func (s *S3Service) DeleteBucket(ctx context.Context, bucketName string) error {
 			return fmt.Errorf("failed to delete objects: %w", err)
 		}
 	}
-	
+
 	_, err = s.client.DeleteBucket(ctx, &s3.DeleteBucketInput{
 		Bucket: aws.String(bucketName),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete bucket: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -269,14 +269,14 @@ func outputS3Table(result *S3CleanupResult) error {
 	fmt.Printf("Public Buckets: %d\n", result.Summary.PublicBuckets)
 	fmt.Printf("Untagged Buckets: %d\n", result.Summary.UntaggedBuckets)
 	fmt.Printf("Cleanup Candidates: %d\n", len(result.Summary.CleanupCandidates))
-	
+
 	if len(result.CleanupCandidates) > 0 {
 		fmt.Printf("\n=== Buckets Recommended for Cleanup ===\n")
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Bucket Name", "Region", "Created", "Objects", "Size", "Reason"})
 		table.SetBorder(false)
 		table.SetAutoWrapText(false)
-		
+
 		for _, bucket := range result.CleanupCandidates {
 			sizeStr := formatBytes(bucket.SizeBytes)
 			row := []string{
@@ -289,16 +289,16 @@ func outputS3Table(result *S3CleanupResult) error {
 			}
 			table.Append(row)
 		}
-		
+
 		table.Render()
 	}
-	
+
 	fmt.Printf("\n=== All Buckets ===\n")
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Bucket Name", "Region", "Created", "Empty", "Public", "Tagged"})
 	table.SetBorder(false)
 	table.SetAutoWrapText(false)
-	
+
 	for _, bucket := range result.Buckets {
 		empty := "No"
 		if bucket.IsEmpty {
@@ -312,7 +312,7 @@ func outputS3Table(result *S3CleanupResult) error {
 		if bucket.HasTags {
 			tagged = "Yes"
 		}
-		
+
 		row := []string{
 			bucket.Name,
 			bucket.Region,
@@ -323,7 +323,7 @@ func outputS3Table(result *S3CleanupResult) error {
 		}
 		table.Append(row)
 	}
-	
+
 	table.Render()
 	return nil
 }
@@ -346,7 +346,7 @@ func (s *S3Service) CleanupBuckets(ctx context.Context, dryRun bool) (*S3Cleanup
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if !dryRun && len(result.CleanupCandidates) > 0 {
 		fmt.Printf("\n=== Performing Cleanup ===\n")
 		for _, bucket := range result.CleanupCandidates {
@@ -356,10 +356,10 @@ func (s *S3Service) CleanupBuckets(ctx context.Context, dryRun bool) (*S3Cleanup
 			} else {
 				fmt.Printf("SUCCESS\n")
 			}
-			
+
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
-	
+
 	return result, nil
 }

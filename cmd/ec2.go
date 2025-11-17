@@ -34,22 +34,22 @@ func runEC2List() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize EC2 service: %w", err)
 	}
-	
+
 	ctx := context.Background()
 	instances, err := ec2Service.ListInstances(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to list instances: %w", err)
 	}
-	
+
 	if len(instances) == 0 {
 		fmt.Println("No EC2 instances found")
 		return nil
 	}
-	
+
 	if err := aws.OutputEC2Instances(instances, outputFormat); err != nil {
 		fmt.Fprintf(os.Stderr, "Error outputting instances: %v\n", err)
 		return err
 	}
-	
+
 	return nil
 }

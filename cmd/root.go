@@ -10,6 +10,11 @@ import (
 )
 
 var (
+	// Version is set via ldflags during build
+	Version   = "dev"
+	BuildTime = "unknown"
+
+	// CLI flags
 	outputFormat string
 	awsProfile   string
 	awsRegion    string
@@ -21,10 +26,10 @@ var rootCmd = &cobra.Command{
 	Use:   "a9s",
 	Short: "Interactive Terminal UI for AWS infrastructure management",
 	Long: `a9s is the k9s for AWS - an interactive Terminal UI that simplifies AWS infrastructure management.
-	
+
 It provides commands for:
 - EC2 instance management and monitoring
-- IAM security auditing and compliance checks  
+- IAM security auditing and compliance checks
 - S3 bucket cleanup and optimization
 - Interactive Terminal UI (TUI) for real-time management
 - And more DevOps automation tasks
@@ -33,7 +38,7 @@ Usage:
   a9s          Launch interactive TUI (default)
   a9s tui      Launch interactive TUI explicitly
   a9s [cmd]    Run specific CLI commands`,
-	Version: "0.1.0",
+	Version: Version,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runTUI(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -49,20 +54,25 @@ func Execute() {
 	}
 }
 
+// GetRootCommand returns the root command for external use (e.g., man page generation)
+func GetRootCommand() *cobra.Command {
+	return rootCmd
+}
+
 func runTUI() error {
 	model := tui.NewModel(awsProfile, awsRegion)
-	
+
 	program := tea.NewProgram(
 		model,
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
-	
+
 	_, err := program.Run()
 	if err != nil {
 		return fmt.Errorf("error running TUI: %w", err)
 	}
-	
+
 	return nil
 }
 

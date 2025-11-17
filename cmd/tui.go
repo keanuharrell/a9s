@@ -30,4 +30,3 @@ Navigation:
 func init() {
 	rootCmd.AddCommand(tuiCmd)
 }
-

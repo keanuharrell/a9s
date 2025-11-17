@@ -32,13 +32,13 @@ func NewIAMModel(profile, region string) *IAMModel {
 		{Title: "Policies", Width: 25},
 		{Title: "Risk Reason", Width: 30},
 	}
-	
+
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithFocused(true),
 		table.WithHeight(15),
 	)
-	
+
 	s := table.DefaultStyles()
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
@@ -50,9 +50,9 @@ func NewIAMModel(profile, region string) *IAMModel {
 		Background(lipgloss.Color("57")).
 		Bold(false)
 	t.SetStyles(s)
-	
+
 	awsService, _ := aws.NewIAMService(profile, region)
-	
+
 	return &IAMModel{
 		table:      t,
 		awsService: awsService,
@@ -66,7 +66,7 @@ func (m *IAMModel) Init() tea.Cmd {
 
 func (m *IAMModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -75,7 +75,7 @@ func (m *IAMModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.showRoleDetails()
 			}
 		}
-		
+
 	case iamLoadedMsg:
 		m.loading = false
 		m.err = msg.err
@@ -85,7 +85,7 @@ func (m *IAMModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
-	
+
 	m.table, cmd = m.table.Update(msg)
 	return m, cmd
 }
@@ -96,19 +96,19 @@ func (m *IAMModel) View() string {
 			Foreground(lipgloss.Color("205")).
 			Render("Loading IAM roles and running security audit...")
 	}
-	
+
 	if m.err != nil {
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
 			Render(fmt.Sprintf("Error loading IAM data: %v", m.err))
 	}
-	
+
 	if m.auditResult == nil || len(m.auditResult.Roles) == 0 {
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
 			Render("No IAM roles found")
 	}
-	
+
 	summary := fmt.Sprintf("🔐 %d roles", m.auditResult.Summary.TotalRoles)
 	if m.auditResult.Summary.HighRiskRoles > 0 {
 		summary += fmt.Sprintf(" • 🚨 %d high-risk", m.auditResult.Summary.HighRiskRoles)
@@ -116,9 +116,9 @@ func (m *IAMModel) View() string {
 	if len(m.auditResult.Summary.RolesWithAdminAccess) > 0 {
 		summary += fmt.Sprintf(" • ⚡ %d admin access", len(m.auditResult.Summary.RolesWithAdminAccess))
 	}
-	
+
 	help := "\n💡 [↑↓] navigate • [enter] role details • [r] refresh"
-	
+
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		lipgloss.NewStyle().Foreground(lipgloss.Color("110")).Render(summary),
@@ -140,7 +140,7 @@ func (m *IAMModel) loadRoles() tea.Cmd {
 				err:    fmt.Errorf("AWS IAM service not initialized"),
 			}
 		}
-		
+
 		ctx := context.Background()
 		result, err := m.awsService.AuditRoles(ctx)
 		return iamLoadedMsg{
@@ -154,28 +154,28 @@ func (m *IAMModel) updateTable() {
 	if m.auditResult == nil {
 		return
 	}
-	
+
 	var rows []table.Row
-	
+
 	for _, role := range m.auditResult.Roles {
 		riskLevel := "Low"
 		riskIcon := "🟢"
-		
+
 		if role.IsHighRisk {
 			riskLevel = "HIGH"
 			riskIcon = "🔴"
 		}
-		
+
 		policies := strings.Join(role.AttachedPolicies, ", ")
 		if len(policies) > 25 {
 			policies = policies[:22] + "..."
 		}
-		
+
 		reason := role.RiskReason
 		if len(reason) > 30 {
 			reason = reason[:27] + "..."
 		}
-		
+
 		rows = append(rows, table.Row{
 			role.Name,
 			role.CreateDate,
@@ -184,7 +184,7 @@ func (m *IAMModel) updateTable() {
 			reason,
 		})
 	}
-	
+
 	m.table.SetRows(rows)
 }
 
@@ -192,21 +192,21 @@ func (m *IAMModel) showRoleDetails() tea.Cmd {
 	if m.auditResult == nil || m.table.Cursor() >= len(m.auditResult.Roles) {
 		return nil
 	}
-	
+
 	role := m.auditResult.Roles[m.table.Cursor()]
-	
+
 	details := fmt.Sprintf("IAM Role Details:\nName: %s\nARN: %s\nCreated: %s\nRisk Level: %s\n",
-		role.Name, role.ARN, role.CreateDate, 
+		role.Name, role.ARN, role.CreateDate,
 		map[bool]string{true: "HIGH", false: "Low"}[role.IsHighRisk])
-	
+
 	if role.RiskReason != "" {
 		details += fmt.Sprintf("Risk Reason: %s\n", role.RiskReason)
 	}
-	
+
 	details += "\nAttached Policies:\n"
 	for _, policy := range role.AttachedPolicies {
 		details += fmt.Sprintf("  • %s\n", policy)
 	}
-	
+
 	return tea.Printf("%s", details)
 }

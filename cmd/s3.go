@@ -40,31 +40,31 @@ func runS3Cleanup() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize S3 service: %w", err)
 	}
-	
+
 	ctx := context.Background()
-	
+
 	if dryRun {
 		fmt.Println("Running in dry-run mode - no changes will be made")
 	}
-	
+
 	result, err := s3Service.CleanupBuckets(ctx, dryRun)
 	if err != nil {
 		return fmt.Errorf("failed to analyze buckets: %w", err)
 	}
-	
+
 	if len(result.Buckets) == 0 {
 		fmt.Println("No S3 buckets found")
 		return nil
 	}
-	
+
 	if err := aws.OutputS3Cleanup(result, outputFormat); err != nil {
 		return fmt.Errorf("failed to output results: %w", err)
 	}
-	
+
 	if !dryRun && len(result.CleanupCandidates) > 0 {
-		fmt.Printf("\n%d buckets were processed for cleanup\n", 
+		fmt.Printf("\n%d buckets were processed for cleanup\n",
 			len(result.CleanupCandidates))
 	}
-	
+
 	return nil
 }

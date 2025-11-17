@@ -21,16 +21,19 @@ builds:
       - goos: windows
         goarch: arm64
     ldflags:
-      - -s -w -X github.com/keanuharrell/a9s/cmd.Version={{.Version}}
+      - -s -w
+      - -X github.com/keanuharrell/a9s/cmd.Version={{.Version}}
+      - -X github.com/keanuharrell/a9s/cmd.BuildTime={{.Date}}
     flags:
       - -trimpath
 
 archives:
   - id: a9s
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    format_overrides:
-      - goos: windows
-        format: zip
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- .Arch }}
     files:
       - LICENSE
       - README.md
@@ -39,7 +42,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
@@ -47,16 +50,26 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+      - '^chore:'
+      - 'README'
+  groups:
+    - title: 'Features'
+      regexp: '^feat:'
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: '^fix:'
+      order: 1
+    - title: 'Others'
+      order: 999
 
 # Homebrew formula configuration
 brews:
-  - name: a9s
-    repository:
+  - repository:
       owner: keanuharrell
       name: homebrew-a9s
       token: "{{ .Env.GITHUB_TOKEN }}"
     homepage: "https://github.com/keanuharrell/a9s"
-    description: "🚀 The k9s for AWS - Interactive Terminal UI"
+    description: "The k9s for AWS - Interactive Terminal UI for AWS infrastructure management"
     license: "MIT"
     skip_upload: auto
     test: |
@@ -65,56 +78,7 @@ brews:
       bin.install "a9s"
     dependencies:
       - name: git
-
-# Snapcraft configuration  
-snapcrafts:
-  - name: a9s
-    publish: true
-    summary: The k9s for AWS - Interactive Terminal UI
-    description: |
-      a9s is the k9s for AWS - a powerful Terminal UI that provides an intuitive way to manage AWS infrastructure.
-      
-      Features:
-      - Interactive Terminal UI with real-time data
-      - EC2 instance management (list, start, stop)
-      - IAM security auditing and risk assessment
-      - S3 bucket analysis and cleanup recommendations
-      - Multi-profile and multi-region support
-      - JSON and table output formats
-      
-      Perfect for DevOps engineers, SREs, and anyone managing AWS infrastructure.
-    grade: stable
-    confinement: strict
-    license: MIT
-    base: core22
-    apps:
-      a9s:
-        command: a9s
-        plugs: ["home", "network"]
-    
-# Nix packages
-nix:
-  - name: a9s
-    repository:
-      owner: keanuharrell
-      name: nur-a9s
-      token: "{{ .Env.GITHUB_TOKEN }}"
-    homepage: "https://github.com/keanuharrell/a9s"
-    description: "Interactive Terminal UI for AWS infrastructure management"
-    license: "mit"
-    skip_upload: auto
-
-# AUR package for Arch Linux
-aurs:
-  - name: a9s-bin
-    homepage: "https://github.com/keanuharrell/a9s"
-    description: "The k9s for AWS - Interactive Terminal UI for AWS infrastructure management"
-    maintainers:
-      - 'Keanu Harrell <keanu@example.com>'
-    license: MIT
-    private_key: "{{ .Env.AUR_KEY }}"
-    git_url: 'ssh://aur@aur.archlinux.org/a9s-bin.git'
-    skip_upload: auto
+        type: optional
 
 # Docker images
 dockers:

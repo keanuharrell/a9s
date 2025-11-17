@@ -39,21 +39,21 @@ func runIAMAudit() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize IAM service: %w", err)
 	}
-	
+
 	ctx := context.Background()
 	result, err := iamService.AuditRoles(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to audit roles: %w", err)
 	}
-	
+
 	if len(result.Roles) == 0 {
 		fmt.Println("No IAM roles found")
 		return nil
 	}
-	
+
 	if err := aws.OutputIAMAudit(result, outputFormat); err != nil {
 		return fmt.Errorf("failed to output audit results: %w", err)
 	}
-	
+
 	return nil
 }

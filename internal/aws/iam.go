@@ -14,18 +14,18 @@ import (
 )
 
 type IAMAuditResult struct {
-	Roles       []IAMRole       `json:"roles"`
-	HighRiskCount int           `json:"high_risk_count"`
-	Summary     AuditSummary    `json:"summary"`
+	Roles         []IAMRole    `json:"roles"`
+	HighRiskCount int          `json:"high_risk_count"`
+	Summary       AuditSummary `json:"summary"`
 }
 
 type IAMRole struct {
-	Name            string   `json:"name"`
-	ARN             string   `json:"arn"`
-	CreateDate      string   `json:"create_date"`
+	Name             string   `json:"name"`
+	ARN              string   `json:"arn"`
+	CreateDate       string   `json:"create_date"`
 	AttachedPolicies []string `json:"attached_policies"`
-	IsHighRisk      bool     `json:"is_high_risk"`
-	RiskReason      string   `json:"risk_reason,omitempty"`
+	IsHighRisk       bool     `json:"is_high_risk"`
+	RiskReason       string   `json:"risk_reason,omitempty"`
 }
 
 type AuditSummary struct {
@@ -48,22 +48,22 @@ var highRiskPolicies = []string{
 
 func NewIAMService(profile, region string) (*IAMService, error) {
 	ctx := context.Background()
-	
+
 	var opts []func(*config.LoadOptions) error
-	
+
 	if region != "" {
 		opts = append(opts, config.WithRegion(region))
 	}
-	
+
 	if profile != "" {
 		opts = append(opts, config.WithSharedConfigProfile(profile))
 	}
-	
+
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	
+
 	return &IAMService{
 		client: iam.NewFromConfig(cfg),
 	}, nil
@@ -74,7 +74,7 @@ func (s *IAMService) AuditRoles(ctx context.Context) (*IAMAuditResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list roles: %w", err)
 	}
-	
+
 	result := &IAMAuditResult{
 		Roles: []IAMRole{},
 		Summary: AuditSummary{
@@ -82,32 +82,32 @@ func (s *IAMService) AuditRoles(ctx context.Context) (*IAMAuditResult, error) {
 			RolesWithWildcards:   []string{},
 		},
 	}
-	
+
 	for _, role := range rolesOutput.Roles {
 		iamRole := IAMRole{
-			Name:            aws.ToString(role.RoleName),
-			ARN:             aws.ToString(role.Arn),
+			Name:             aws.ToString(role.RoleName),
+			ARN:              aws.ToString(role.Arn),
 			AttachedPolicies: []string{},
 		}
-		
+
 		if role.CreateDate != nil {
 			iamRole.CreateDate = role.CreateDate.Format("2006-01-02")
 		}
-		
+
 		policies, err := s.getAttachedPolicies(ctx, aws.ToString(role.RoleName))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to get policies for role %s: %v\n", 
+			fmt.Fprintf(os.Stderr, "Warning: Failed to get policies for role %s: %v\n",
 				aws.ToString(role.RoleName), err)
 			continue
 		}
-		
+
 		iamRole.AttachedPolicies = policies
 		iamRole.IsHighRisk, iamRole.RiskReason = s.assessRisk(policies)
-		
+
 		if iamRole.IsHighRisk {
 			result.HighRiskCount++
 			result.Summary.HighRiskRoles++
-			
+
 			if strings.Contains(iamRole.RiskReason, "Administrator") {
 				result.Summary.RolesWithAdminAccess = append(
 					result.Summary.RolesWithAdminAccess, iamRole.Name)
@@ -117,12 +117,12 @@ func (s *IAMService) AuditRoles(ctx context.Context) (*IAMAuditResult, error) {
 					result.Summary.RolesWithWildcards, iamRole.Name)
 			}
 		}
-		
+
 		result.Roles = append(result.Roles, iamRole)
 	}
-	
+
 	result.Summary.TotalRoles = len(result.Roles)
-	
+
 	return result, nil
 }
 
@@ -133,12 +133,12 @@ func (s *IAMService) getAttachedPolicies(ctx context.Context, roleName string) (
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var policies []string
 	for _, policy := range output.AttachedPolicies {
 		policies = append(policies, aws.ToString(policy.PolicyName))
 	}
-	
+
 	inlineOutput, err := s.client.ListRolePolicies(ctx, &iam.ListRolePoliciesInput{
 		RoleName: aws.String(roleName),
 	})
@@ -147,7 +147,7 @@ func (s *IAMService) getAttachedPolicies(ctx context.Context, roleName string) (
 			policies = append(policies, fmt.Sprintf("%s (inline)", policyName))
 		}
 	}
-	
+
 	return policies, nil
 }
 
@@ -158,12 +158,12 @@ func (s *IAMService) assessRisk(policies []string) (bool, string) {
 				return true, fmt.Sprintf("Has %s policy", highRisk)
 			}
 		}
-		
+
 		if strings.Contains(policy, "*") {
 			return true, "Contains wildcard permissions"
 		}
 	}
-	
+
 	return false, ""
 }
 
@@ -188,12 +188,12 @@ func outputIAMTable(result *IAMAuditResult) error {
 	fmt.Printf("\n=== IAM Audit Summary ===\n")
 	fmt.Printf("Total Roles: %d\n", result.Summary.TotalRoles)
 	fmt.Printf("High Risk Roles: %d\n", result.Summary.HighRiskRoles)
-	
+
 	if len(result.Summary.RolesWithAdminAccess) > 0 {
-		fmt.Printf("Roles with Admin Access: %s\n", 
+		fmt.Printf("Roles with Admin Access: %s\n",
 			strings.Join(result.Summary.RolesWithAdminAccess, ", "))
 	}
-	
+
 	fmt.Printf("\n=== Role Details ===\n")
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Role Name", "Created", "Policies", "Risk Level", "Risk Reason"})
@@ -202,18 +202,18 @@ func outputIAMTable(result *IAMAuditResult) error {
 	table.SetAutoFormatHeaders(true)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	
+
 	for _, role := range result.Roles {
 		riskLevel := "Low"
 		if role.IsHighRisk {
 			riskLevel = "HIGH"
 		}
-		
+
 		policies := strings.Join(role.AttachedPolicies, ", ")
 		if len(policies) > 50 {
 			policies = policies[:47] + "..."
 		}
-		
+
 		row := []string{
 			role.Name,
 			role.CreateDate,
@@ -223,7 +223,7 @@ func outputIAMTable(result *IAMAuditResult) error {
 		}
 		table.Append(row)
 	}
-	
+
 	table.Render()
 	return nil
 }

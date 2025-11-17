@@ -9,16 +9,16 @@ import (
 )
 
 type Model struct {
-	currentView   ViewType
-	awsProfile    string
-	awsRegion     string
-	ec2View      *EC2Model
-	iamView      *IAMModel
-	s3View       *S3Model
-	loading       bool
-	err           error
-	width         int
-	height        int
+	currentView ViewType
+	awsProfile  string
+	awsRegion   string
+	ec2View     *EC2Model
+	iamView     *IAMModel
+	s3View      *S3Model
+	loading     bool
+	err         error
+	width       int
+	height      int
 }
 
 type ViewType int
@@ -63,7 +63,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		return m, nil
-	
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -83,18 +83,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "r":
 			return m, m.refreshCurrentView()
 		}
-		
+
 	case tickMsg:
 		return m, tea.Batch(
 			tick(),
 			m.refreshCurrentView(),
 		)
-	
+
 	case error:
 		m.err = msg
 		return m, nil
 	}
-	
+
 	var cmd tea.Cmd
 	switch m.currentView {
 	case EC2View:
@@ -110,7 +110,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.s3View = s3Model.(*S3Model)
 		cmd = s3Cmd
 	}
-	
+
 	return m, cmd
 }
 
@@ -130,12 +130,12 @@ func (m *Model) View() string {
 	if m.width == 0 {
 		return "Loading..."
 	}
-	
+
 	header := m.renderHeader()
 	tabs := m.renderTabs()
 	content := m.renderCurrentView()
 	footer := m.renderFooter()
-	
+
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,
@@ -154,7 +154,7 @@ func (m *Model) renderHeader() string {
 	if region == "" {
 		region = "us-east-1"
 	}
-	
+
 	headerStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("205")).
@@ -162,25 +162,25 @@ func (m *Model) renderHeader() string {
 		BorderForeground(lipgloss.Color("62")).
 		Padding(0, 1).
 		Width(m.width - 2)
-	
+
 	title := fmt.Sprintf("🚀 a9s - AWS Terminal UI (Profile: %s, Region: %s)", profile, region)
 	return headerStyle.Render(title)
 }
 
 func (m *Model) renderTabs() string {
 	tabs := []string{"[1] EC2", "[2] IAM", "[3] S3", "[?] Help"}
-	
+
 	var renderedTabs []string
 	for i, tab := range tabs {
 		style := lipgloss.NewStyle().Padding(0, 1)
-		
+
 		if ViewType(i) == m.currentView || (i == 3 && m.currentView == HelpView) {
 			style = style.Background(lipgloss.Color("62")).Foreground(lipgloss.Color("230"))
 		}
-		
+
 		renderedTabs = append(renderedTabs, style.Render(tab))
 	}
-	
+
 	return lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
 }
 
@@ -189,7 +189,7 @@ func (m *Model) renderCurrentView() string {
 		Height(m.height - 6).
 		Width(m.width - 2).
 		Padding(1)
-	
+
 	var content string
 	switch m.currentView {
 	case EC2View:
@@ -201,14 +201,14 @@ func (m *Model) renderCurrentView() string {
 	case HelpView:
 		content = m.renderHelp()
 	}
-	
+
 	if m.err != nil {
 		errorStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
 			Bold(true)
 		content = errorStyle.Render(fmt.Sprintf("Error: %v", m.err))
 	}
-	
+
 	return contentStyle.Render(content)
 }
 
@@ -240,7 +240,7 @@ Service-specific keys:
 
 Tip: Views refresh automatically every 5 seconds
 `
-	
+
 	return lipgloss.NewStyle().
 		Foreground(lipgloss.Color("244")).
 		Render(help)
@@ -254,13 +254,13 @@ func (m *Model) renderFooter() string {
 		BorderForeground(lipgloss.Color("238")).
 		Padding(0, 1).
 		Width(m.width - 2)
-	
+
 	status := ""
 	if m.loading {
 		status = "Loading..."
 	} else {
 		status = "Ready • [r] refresh • [q] quit • [?] help"
 	}
-	
+
 	return footerStyle.Render(status)
 }

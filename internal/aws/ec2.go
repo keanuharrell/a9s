@@ -15,14 +15,14 @@ import (
 )
 
 type EC2Instance struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	State       string `json:"state"`
-	PublicIP    string `json:"public_ip"`
-	PrivateIP   string `json:"private_ip"`
-	AZ          string `json:"availability_zone"`
-	LaunchTime  string `json:"launch_time"`
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Type       string `json:"type"`
+	State      string `json:"state"`
+	PublicIP   string `json:"public_ip"`
+	PrivateIP  string `json:"private_ip"`
+	AZ         string `json:"availability_zone"`
+	LaunchTime string `json:"launch_time"`
 }
 
 type EC2Service struct {
@@ -31,22 +31,22 @@ type EC2Service struct {
 
 func NewEC2Service(profile, region string) (*EC2Service, error) {
 	ctx := context.Background()
-	
+
 	var opts []func(*config.LoadOptions) error
-	
+
 	if region != "" {
 		opts = append(opts, config.WithRegion(region))
 	}
-	
+
 	if profile != "" {
 		opts = append(opts, config.WithSharedConfigProfile(profile))
 	}
-	
+
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	
+
 	return &EC2Service{
 		client: ec2.NewFromConfig(cfg),
 	}, nil
@@ -57,7 +57,7 @@ func (s *EC2Service) ListInstances(ctx context.Context) ([]EC2Instance, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to describe instances: %w", err)
 	}
-	
+
 	var instances []EC2Instance
 	for _, reservation := range result.Reservations {
 		for _, instance := range reservation.Instances {
@@ -69,17 +69,17 @@ func (s *EC2Service) ListInstances(ctx context.Context) ([]EC2Instance, error) {
 				PublicIP:  aws.ToString(instance.PublicIpAddress),
 				AZ:        aws.ToString(instance.Placement.AvailabilityZone),
 			}
-			
+
 			if instance.LaunchTime != nil {
 				ec2Instance.LaunchTime = instance.LaunchTime.Format("2006-01-02 15:04:05")
 			}
-			
+
 			ec2Instance.Name = getInstanceName(instance.Tags)
-			
+
 			instances = append(instances, ec2Instance)
 		}
 	}
-	
+
 	return instances, nil
 }
 
@@ -123,7 +123,7 @@ func outputTable(instances []EC2Instance) error {
 	table.SetHeaderLine(false)
 	table.SetTablePadding("\t")
 	table.SetNoWhiteSpace(true)
-	
+
 	for _, instance := range instances {
 		row := []string{
 			instance.ID,
@@ -137,7 +137,7 @@ func outputTable(instances []EC2Instance) error {
 		}
 		table.Append(row)
 	}
-	
+
 	table.Render()
 	return nil
 }
