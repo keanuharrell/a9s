@@ -25,7 +25,7 @@ This command will:
 - Flag public buckets without tags
 - Recommend buckets for cleanup
 - Optionally delete buckets (with --dry-run flag for safety)`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		return runS3Cleanup()
 	},
 }

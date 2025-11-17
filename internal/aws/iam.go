@@ -13,12 +13,14 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+// IAMAuditResult contains the results of an IAM roles security audit
 type IAMAuditResult struct {
 	Roles         []IAMRole    `json:"roles"`
 	HighRiskCount int          `json:"high_risk_count"`
 	Summary       AuditSummary `json:"summary"`
 }
 
+// IAMRole represents an IAM role with its policies and risk assessment
 type IAMRole struct {
 	Name             string   `json:"name"`
 	ARN              string   `json:"arn"`
@@ -28,6 +30,7 @@ type IAMRole struct {
 	RiskReason       string   `json:"risk_reason,omitempty"`
 }
 
+// AuditSummary provides aggregated statistics from an IAM audit
 type AuditSummary struct {
 	TotalRoles           int      `json:"total_roles"`
 	HighRiskRoles        int      `json:"high_risk_roles"`
@@ -35,6 +38,7 @@ type AuditSummary struct {
 	RolesWithWildcards   []string `json:"roles_with_wildcards"`
 }
 
+// IAMService provides methods for interacting with AWS IAM
 type IAMService struct {
 	client *iam.Client
 }
@@ -46,6 +50,7 @@ var highRiskPolicies = []string{
 	"SecurityAudit",
 }
 
+// NewIAMService creates a new IAM service instance with the specified AWS profile and region
 func NewIAMService(profile, region string) (*IAMService, error) {
 	ctx := context.Background()
 
@@ -69,6 +74,7 @@ func NewIAMService(profile, region string) (*IAMService, error) {
 	}, nil
 }
 
+// AuditRoles performs a security audit of all IAM roles in the account
 func (s *IAMService) AuditRoles(ctx context.Context) (*IAMAuditResult, error) {
 	rolesOutput, err := s.client.ListRoles(ctx, &iam.ListRolesInput{})
 	if err != nil {
@@ -134,7 +140,7 @@ func (s *IAMService) getAttachedPolicies(ctx context.Context, roleName string) (
 		return nil, err
 	}
 
-	var policies []string
+	policies := make([]string, 0, len(output.AttachedPolicies))
 	for _, policy := range output.AttachedPolicies {
 		policies = append(policies, aws.ToString(policy.PolicyName))
 	}
@@ -167,6 +173,7 @@ func (s *IAMService) assessRisk(policies []string) (bool, string) {
 	return false, ""
 }
 
+// OutputIAMAudit outputs the IAM audit results in the specified format (json or table)
 func OutputIAMAudit(result *IAMAuditResult, format string) error {
 	switch strings.ToLower(format) {
 	case "json":

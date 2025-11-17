@@ -1,3 +1,4 @@
+// Package main is the entry point for the a9s AWS management tool
 package main
 
 import (

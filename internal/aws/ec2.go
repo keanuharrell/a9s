@@ -1,3 +1,4 @@
+// Package aws provides AWS service clients and operations for EC2, IAM, and S3
 package aws
 
 import (
@@ -11,9 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	appconfig "github.com/keanuharrell/a9s/internal/config"
 	"github.com/olekukonko/tablewriter"
 )
 
+// EC2Instance represents an EC2 instance with its metadata
 type EC2Instance struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
@@ -25,10 +28,12 @@ type EC2Instance struct {
 	LaunchTime string `json:"launch_time"`
 }
 
+// EC2Service provides methods for interacting with AWS EC2
 type EC2Service struct {
 	client *ec2.Client
 }
 
+// NewEC2Service creates a new EC2 service instance with the specified AWS profile and region
 func NewEC2Service(profile, region string) (*EC2Service, error) {
 	ctx := context.Background()
 
@@ -52,6 +57,7 @@ func NewEC2Service(profile, region string) (*EC2Service, error) {
 	}, nil
 }
 
+// ListInstances retrieves all EC2 instances in the configured region
 func (s *EC2Service) ListInstances(ctx context.Context) ([]EC2Instance, error) {
 	result, err := s.client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{})
 	if err != nil {
@@ -92,11 +98,12 @@ func getInstanceName(tags []types.Tag) string {
 	return "-"
 }
 
+// OutputEC2Instances outputs EC2 instances in the specified format (json or table)
 func OutputEC2Instances(instances []EC2Instance, format string) error {
 	switch strings.ToLower(format) {
-	case "json":
+	case appconfig.FormatJSON:
 		return outputJSON(instances)
-	case "table":
+	case appconfig.FormatTable:
 		return outputTable(instances)
 	default:
 		return fmt.Errorf("unsupported output format: %s", format)

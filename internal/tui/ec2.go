@@ -8,8 +8,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/keanuharrell/a9s/internal/aws"
+	"github.com/keanuharrell/a9s/internal/config"
 )
 
+// EC2Model represents the EC2 instances view model
 type EC2Model struct {
 	table      table.Model
 	instances  []aws.EC2Instance
@@ -23,6 +25,7 @@ type ec2LoadedMsg struct {
 	err       error
 }
 
+// NewEC2Model creates a new EC2 model with the specified AWS profile and region
 func NewEC2Model(profile, region string) *EC2Model {
 	columns := []table.Column{
 		{Title: "ID", Width: 20},
@@ -60,17 +63,19 @@ func NewEC2Model(profile, region string) *EC2Model {
 	}
 }
 
+// Init initializes the EC2 model
 func (m *EC2Model) Init() tea.Cmd {
 	return m.loadInstances()
 }
 
+// Update handles messages for the EC2 model
 func (m *EC2Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "enter":
+		case config.KeyEnter:
 			if len(m.instances) > 0 && m.table.Cursor() < len(m.instances) {
 				return m, m.showInstanceDetails()
 			}
@@ -98,6 +103,7 @@ func (m *EC2Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// View renders the EC2 view
 func (m *EC2Model) View() string {
 	if m.loading {
 		return lipgloss.NewStyle().
@@ -122,9 +128,9 @@ func (m *EC2Model) View() string {
 	stopped := 0
 	for _, instance := range m.instances {
 		switch instance.State {
-		case "running":
+		case config.EC2StateRunning:
 			running++
-		case "stopped":
+		case config.EC2StateStopped:
 			stopped++
 		}
 	}
@@ -146,6 +152,7 @@ func (m *EC2Model) View() string {
 	)
 }
 
+// Refresh reloads the EC2 instances
 func (m *EC2Model) Refresh() tea.Cmd {
 	m.loading = true
 	return m.loadInstances()
@@ -170,14 +177,14 @@ func (m *EC2Model) loadInstances() tea.Cmd {
 }
 
 func (m *EC2Model) updateTable() {
-	var rows []table.Row
+	rows := make([]table.Row, 0, len(m.instances))
 
 	for _, instance := range m.instances {
 		state := instance.State
 		switch state {
-		case "running":
+		case config.EC2StateRunning:
 			state = "🟢 " + state
-		case "stopped":
+		case config.EC2StateStopped:
 			state = "🔴 " + state
 		case "pending":
 			state = "🟡 " + state
@@ -222,7 +229,7 @@ func (m *EC2Model) startInstance() tea.Cmd {
 
 	instance := m.instances[m.table.Cursor()]
 
-	if instance.State == "running" {
+	if instance.State == config.EC2StateRunning {
 		return tea.Printf("Instance %s is already running", instance.ID)
 	}
 
@@ -237,7 +244,7 @@ func (m *EC2Model) stopInstance() tea.Cmd {
 
 	instance := m.instances[m.table.Cursor()]
 
-	if instance.State == "stopped" {
+	if instance.State == config.EC2StateStopped {
 		return tea.Printf("Instance %s is already stopped", instance.ID)
 	}
 

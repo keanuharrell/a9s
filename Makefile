@@ -48,20 +48,32 @@ test-coverage:
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "✓ Coverage report generated: coverage.html"
 
-## lint: Run linters (go vet + staticcheck)
+## lint: Run linters (golangci-lint)
 lint:
-	@echo "Running linters..."
-	@echo "→ go fmt (check only)..."
-	@test -z "$$(gofmt -l .)" || (echo "Files need formatting:" && gofmt -l . && exit 1)
-	@echo "→ go vet..."
-	@go vet ./...
-	@echo "→ staticcheck..."
-	@if ! command -v staticcheck >/dev/null 2>&1; then \
-		echo "Installing staticcheck..."; \
-		go install honnef.co/go/tools/cmd/staticcheck@latest; \
+	@echo "Running golangci-lint..."
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	elif [ -f $(GOBIN)/golangci-lint ]; then \
+		$(GOBIN)/golangci-lint run ./...; \
+	else \
+		echo "Installing golangci-lint..."; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+		$(GOBIN)/golangci-lint run ./...; \
 	fi
-	@$(GOBIN)/staticcheck ./...
 	@echo "✓ Lint complete"
+
+lint-fix:
+	@echo "Running golangci-lint with auto-fix..."
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run --fix ./...; \
+	elif [ -f $(GOBIN)/golangci-lint ]; then \
+		$(GOBIN)/golangci-lint run --fix ./...; \
+	else \
+		echo "Installing golangci-lint..."; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+		$(GOBIN)/golangci-lint run --fix ./...; \
+	fi
+	@echo "✓ Lint fix complete"
 
 ## fmt: Format code with gofmt
 fmt:
@@ -70,7 +82,7 @@ fmt:
 	@echo "✓ Format complete"
 
 ## pre-commit: Run all checks before committing
-pre-commit: fmt vet lint test
+pre-commit: fmt vet lint-fix test
 	@echo "✓ All pre-commit checks passed!"
 
 ## docker-build: Build Docker image

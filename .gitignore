@@ -50,7 +50,6 @@ dist/
 # AWS credentials (never commit these)
 .aws/
 credentials
-config
 
 # Logs
 logs

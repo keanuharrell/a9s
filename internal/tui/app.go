@@ -1,3 +1,4 @@
+// Package tui provides terminal user interface components for a9s
 package tui
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// Model represents the main TUI application model
 type Model struct {
 	currentView ViewType
 	awsProfile  string
@@ -21,12 +23,17 @@ type Model struct {
 	height      int
 }
 
+// ViewType represents the different views available in the TUI
 type ViewType int
 
 const (
+	// EC2View displays EC2 instances
 	EC2View ViewType = iota
+	// IAMView displays IAM roles
 	IAMView
+	// S3View displays S3 buckets
 	S3View
+	// HelpView displays help information
 	HelpView
 )
 
@@ -38,6 +45,7 @@ func tick() tea.Cmd {
 	})
 }
 
+// NewModel creates a new TUI model with the specified AWS profile and region
 func NewModel(profile, region string) *Model {
 	return &Model{
 		currentView: EC2View,
@@ -50,6 +58,7 @@ func NewModel(profile, region string) *Model {
 	}
 }
 
+// Init initializes the TUI model
 func (m *Model) Init() tea.Cmd {
 	return tea.Batch(
 		tick(),
@@ -57,6 +66,7 @@ func (m *Model) Init() tea.Cmd {
 	)
 }
 
+// Update handles messages and updates the model state
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -126,6 +136,7 @@ func (m *Model) refreshCurrentView() tea.Cmd {
 	return nil
 }
 
+// View renders the TUI view
 func (m *Model) View() string {
 	if m.width == 0 {
 		return "Loading..."
@@ -170,7 +181,7 @@ func (m *Model) renderHeader() string {
 func (m *Model) renderTabs() string {
 	tabs := []string{"[1] EC2", "[2] IAM", "[3] S3", "[?] Help"}
 
-	var renderedTabs []string
+	renderedTabs := make([]string, 0, len(tabs))
 	for i, tab := range tabs {
 		style := lipgloss.NewStyle().Padding(0, 1)
 

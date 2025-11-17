@@ -24,7 +24,7 @@ This command will:
 - Identify roles with administrative access
 - Flag roles with wildcard permissions
 - Provide a summary of security findings`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		return runIAMAudit()
 	},
 }

@@ -8,8 +8,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/keanuharrell/a9s/internal/aws"
+	"github.com/keanuharrell/a9s/internal/config"
 )
 
+// S3Model represents the S3 buckets view model
 type S3Model struct {
 	table         table.Model
 	cleanupResult *aws.S3CleanupResult
@@ -23,6 +25,7 @@ type s3LoadedMsg struct {
 	err    error
 }
 
+// NewS3Model creates a new S3 model with the specified AWS profile and region
 func NewS3Model(profile, region string) *S3Model {
 	columns := []table.Column{
 		{Title: "Bucket Name", Width: 35},
@@ -61,17 +64,19 @@ func NewS3Model(profile, region string) *S3Model {
 	}
 }
 
+// Init initializes the S3 model
 func (m *S3Model) Init() tea.Cmd {
 	return m.loadBuckets()
 }
 
+// Update handles messages for the S3 model
 func (m *S3Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "enter":
+		case config.KeyEnter:
 			if m.cleanupResult != nil && len(m.cleanupResult.Buckets) > 0 && m.table.Cursor() < len(m.cleanupResult.Buckets) {
 				return m, m.showBucketDetails()
 			}
@@ -95,6 +100,7 @@ func (m *S3Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// View renders the S3 view
 func (m *S3Model) View() string {
 	if m.loading {
 		return lipgloss.NewStyle().
@@ -135,6 +141,7 @@ func (m *S3Model) View() string {
 	)
 }
 
+// Refresh reloads the S3 buckets
 func (m *S3Model) Refresh() tea.Cmd {
 	m.loading = true
 	return m.loadBuckets()
@@ -163,7 +170,7 @@ func (m *S3Model) updateTable() {
 		return
 	}
 
-	var rows []table.Row
+	rows := make([]table.Row, 0, len(m.cleanupResult.Buckets))
 
 	for _, bucket := range m.cleanupResult.Buckets {
 		public := "🔒 No"

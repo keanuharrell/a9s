@@ -11,7 +11,8 @@ import (
 
 var (
 	// Version is set via ldflags during build
-	Version   = "dev"
+	Version = "dev"
+	// BuildTime is set via ldflags during build
 	BuildTime = "unknown"
 
 	// CLI flags
@@ -39,7 +40,7 @@ Usage:
   a9s tui      Launch interactive TUI explicitly
   a9s [cmd]    Run specific CLI commands`,
 	Version: Version,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		if err := runTUI(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
@@ -47,6 +48,7 @@ Usage:
 	},
 }
 
+// Execute runs the root command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)

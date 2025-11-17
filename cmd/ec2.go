@@ -1,3 +1,4 @@
+// Package cmd provides CLI commands for the a9s AWS management tool
 package cmd
 
 import (
@@ -19,7 +20,7 @@ var ec2ListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List EC2 instances",
 	Long:  `List all EC2 instances in the specified region with details`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		return runEC2List()
 	},
 }

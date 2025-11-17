@@ -12,15 +12,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	appconfig "github.com/keanuharrell/a9s/internal/config"
 	"github.com/olekukonko/tablewriter"
 )
 
+// S3CleanupResult contains the results of an S3 bucket cleanup analysis
 type S3CleanupResult struct {
 	Buckets           []S3BucketInfo `json:"buckets"`
 	CleanupCandidates []S3BucketInfo `json:"cleanup_candidates"`
 	Summary           S3Summary      `json:"summary"`
 }
 
+// S3BucketInfo contains detailed information about an S3 bucket
 type S3BucketInfo struct {
 	Name          string `json:"name"`
 	Region        string `json:"region"`
@@ -34,6 +37,7 @@ type S3BucketInfo struct {
 	CleanupReason string `json:"cleanup_reason,omitempty"`
 }
 
+// S3Summary provides aggregated statistics from S3 bucket analysis
 type S3Summary struct {
 	TotalBuckets      int      `json:"total_buckets"`
 	EmptyBuckets      int      `json:"empty_buckets"`
@@ -42,10 +46,12 @@ type S3Summary struct {
 	CleanupCandidates []string `json:"cleanup_candidates"`
 }
 
+// S3Service provides methods for interacting with AWS S3
 type S3Service struct {
 	client *s3.Client
 }
 
+// NewS3Service creates a new S3 service instance with the specified AWS profile and region
 func NewS3Service(profile, region string) (*S3Service, error) {
 	ctx := context.Background()
 
@@ -69,6 +75,7 @@ func NewS3Service(profile, region string) (*S3Service, error) {
 	}, nil
 }
 
+// AnalyzeBuckets analyzes all S3 buckets and identifies cleanup candidates
 func (s *S3Service) AnalyzeBuckets(ctx context.Context) (*S3CleanupResult, error) {
 	bucketsOutput, err := s.client.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
@@ -208,6 +215,7 @@ func (s *S3Service) shouldCleanup(bucket S3BucketInfo) (bool, string) {
 	return false, ""
 }
 
+// DeleteBucket deletes an S3 bucket and all its objects
 func (s *S3Service) DeleteBucket(ctx context.Context, bucketName string) error {
 	objects, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
@@ -217,9 +225,9 @@ func (s *S3Service) DeleteBucket(ctx context.Context, bucketName string) error {
 	}
 
 	if len(objects.Contents) > 0 {
-		var objectIds []types.ObjectIdentifier
+		var objectIDs []types.ObjectIdentifier
 		for _, object := range objects.Contents {
-			objectIds = append(objectIds, types.ObjectIdentifier{
+			objectIDs = append(objectIDs, types.ObjectIdentifier{
 				Key: object.Key,
 			})
 		}
@@ -227,7 +235,7 @@ func (s *S3Service) DeleteBucket(ctx context.Context, bucketName string) error {
 		_, err = s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
 			Bucket: aws.String(bucketName),
 			Delete: &types.Delete{
-				Objects: objectIds,
+				Objects: objectIDs,
 			},
 		})
 		if err != nil {
@@ -245,11 +253,12 @@ func (s *S3Service) DeleteBucket(ctx context.Context, bucketName string) error {
 	return nil
 }
 
+// OutputS3Cleanup outputs the S3 cleanup results in the specified format (json or table)
 func OutputS3Cleanup(result *S3CleanupResult, format string) error {
 	switch strings.ToLower(format) {
-	case "json":
+	case appconfig.FormatJSON:
 		return outputS3JSON(result)
-	case "table":
+	case appconfig.FormatTable:
 		return outputS3Table(result)
 	default:
 		return fmt.Errorf("unsupported output format: %s", format)
@@ -300,17 +309,17 @@ func outputS3Table(result *S3CleanupResult) error {
 	table.SetAutoWrapText(false)
 
 	for _, bucket := range result.Buckets {
-		empty := "No"
+		empty := appconfig.S3No
 		if bucket.IsEmpty {
-			empty = "Yes"
+			empty = appconfig.S3Yes
 		}
-		public := "No"
+		public := appconfig.S3No
 		if bucket.IsPublic {
-			public = "Yes"
+			public = appconfig.S3Yes
 		}
-		tagged := "No"
+		tagged := appconfig.S3No
 		if bucket.HasTags {
-			tagged = "Yes"
+			tagged = appconfig.S3Yes
 		}
 
 		row := []string{
@@ -341,6 +350,7 @@ func formatBytes(bytes int64) string {
 	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }
 
+// CleanupBuckets performs cleanup of buckets identified as candidates (dry-run mode available)
 func (s *S3Service) CleanupBuckets(ctx context.Context, dryRun bool) (*S3CleanupResult, error) {
 	result, err := s.AnalyzeBuckets(ctx)
 	if err != nil {

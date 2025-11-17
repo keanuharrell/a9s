@@ -9,8 +9,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/keanuharrell/a9s/internal/aws"
+	"github.com/keanuharrell/a9s/internal/config"
 )
 
+// IAMModel represents the IAM roles view model
 type IAMModel struct {
 	table       table.Model
 	auditResult *aws.IAMAuditResult
@@ -24,6 +26,7 @@ type iamLoadedMsg struct {
 	err    error
 }
 
+// NewIAMModel creates a new IAM model with the specified AWS profile and region
 func NewIAMModel(profile, region string) *IAMModel {
 	columns := []table.Column{
 		{Title: "Role Name", Width: 30},
@@ -60,17 +63,18 @@ func NewIAMModel(profile, region string) *IAMModel {
 	}
 }
 
+// Init initializes the IAM model
 func (m *IAMModel) Init() tea.Cmd {
 	return m.loadRoles()
 }
 
+// Update handles messages for the IAM model
 func (m *IAMModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
+		if msg.String() == config.KeyEnter {
 			if m.auditResult != nil && len(m.auditResult.Roles) > 0 && m.table.Cursor() < len(m.auditResult.Roles) {
 				return m, m.showRoleDetails()
 			}
@@ -90,6 +94,7 @@ func (m *IAMModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// View renders the IAM view
 func (m *IAMModel) View() string {
 	if m.loading {
 		return lipgloss.NewStyle().
@@ -127,6 +132,7 @@ func (m *IAMModel) View() string {
 	)
 }
 
+// Refresh reloads the IAM roles
 func (m *IAMModel) Refresh() tea.Cmd {
 	m.loading = true
 	return m.loadRoles()
@@ -155,7 +161,7 @@ func (m *IAMModel) updateTable() {
 		return
 	}
 
-	var rows []table.Row
+	rows := make([]table.Row, 0, len(m.auditResult.Roles))
 
 	for _, role := range m.auditResult.Roles {
 		riskLevel := "Low"
