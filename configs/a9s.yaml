@@ -1,0 +1,200 @@
+# a9s Configuration File
+# Place in ~/.config/a9s/a9s.yaml or specify with --config flag
+#
+# Environment variables can override any setting using A9S_ prefix:
+# A9S_AWS_PROFILE=myprofile
+# A9S_API_ENABLED=true
+
+# =============================================================================
+# AWS Configuration
+# =============================================================================
+aws:
+  # AWS profile to use (empty = default profile)
+  profile: ""
+
+  # Default AWS region
+  region: "us-east-1"
+
+  # API request timeout
+  timeout: 30s
+
+  # Retry configuration
+  retry:
+    max_attempts: 3
+    initial_backoff: 1s
+
+# =============================================================================
+# TUI Configuration
+# =============================================================================
+tui:
+  # Auto-refresh interval for data
+  refresh_interval: 5s
+
+  # Color theme (default, dark, dracula, nord)
+  theme: "default"
+
+  # Enable mouse support
+  mouse_enabled: true
+
+  # Show help panel on startup
+  show_help_on_start: false
+
+  # Use alternate screen buffer
+  alt_screen: true
+
+# =============================================================================
+# Services Configuration
+# =============================================================================
+services:
+  # List of enabled services
+  enabled:
+    - ec2
+    - iam
+    - s3
+
+  # EC2 service configuration
+  ec2:
+    default_filters:
+      # Only show running instances by default (comment to show all)
+      # state: "running"
+
+  # IAM service configuration
+  iam:
+    # High-risk policies to flag in audit
+    high_risk_policies:
+      - AdministratorAccess
+      - PowerUserAccess
+      - IAMFullAccess
+
+  # S3 service configuration
+  s3:
+    show_empty_buckets: true
+    max_objects_preview: 100
+
+# =============================================================================
+# Keyboard Shortcuts
+# =============================================================================
+keybindings:
+  # Global shortcuts
+  global:
+    quit: ["q", "ctrl+c"]
+    help: ["?", "h"]
+    refresh: ["r"]
+
+  # Service shortcuts (numbers to switch views)
+  services:
+    ec2: "1"
+    iam: "2"
+    s3: "3"
+    # lambda: "4"  # Add more as needed
+
+# =============================================================================
+# Plugin Configuration
+# =============================================================================
+plugins:
+  # Plugin directory path
+  directory: "~/.config/a9s/plugins"
+
+  # List of enabled plugins
+  enabled: []
+  # - lambda
+  # - cloudwatch
+
+  # Enable hot-reload for plugins
+  hot_reload: true
+
+# =============================================================================
+# Hook Configuration
+# =============================================================================
+hooks:
+  # Audit logging hook
+  audit:
+    enabled: false
+    log_file: "~/.config/a9s/audit.log"
+
+  # Notification hook
+  notifications:
+    enabled: false
+    slack_webhook: ""
+
+# =============================================================================
+# REST API Configuration
+# =============================================================================
+api:
+  # Enable REST API server
+  enabled: false
+
+  # Server address (host:port)
+  address: "127.0.0.1:8080"
+
+  # Authentication settings
+  auth:
+    enabled: true
+    type: "basic"  # basic, bearer, api-key
+    username: "admin"
+    password: ""  # Set via A9S_API_AUTH_PASSWORD env var
+    api_key: ""   # Set via A9S_API_AUTH_API_KEY env var
+
+  # CORS settings
+  cors:
+    enabled: false
+    allowed_origins:
+      - "http://localhost:3000"
+    allowed_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+    allowed_headers:
+      - "Content-Type"
+      - "Authorization"
+
+# =============================================================================
+# Logging Configuration
+# =============================================================================
+logging:
+  # Log level: debug, info, warn, error
+  level: "info"
+
+  # Log format: text, json
+  format: "text"
+
+  # Log file path (empty = stdout only)
+  file: ""
+
+# =============================================================================
+# Theme Configuration
+# =============================================================================
+themes:
+  default:
+    primary: "#FF79C6"
+    secondary: "#BD93F9"
+    success: "#50FA7B"
+    warning: "#FFB86C"
+    error: "#FF5555"
+    background: "#282A36"
+    foreground: "#F8F8F2"
+    border: "#6272A4"
+    muted: "#6272A4"
+
+  dark:
+    primary: "#61AFEF"
+    secondary: "#C678DD"
+    success: "#98C379"
+    warning: "#E5C07B"
+    error: "#E06C75"
+    background: "#1E1E1E"
+    foreground: "#ABB2BF"
+    border: "#3E4451"
+    muted: "#5C6370"
+
+  nord:
+    primary: "#88C0D0"
+    secondary: "#B48EAD"
+    success: "#A3BE8C"
+    warning: "#EBCB8B"
+    error: "#BF616A"
+    background: "#2E3440"
+    foreground: "#ECEFF4"
+    border: "#4C566A"
+    muted: "#4C566A"
