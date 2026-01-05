@@ -1,3 +1,10 @@
+## [0.2.4](https://github.com/keanuharrell/a9s/compare/v0.2.3...v0.2.4) (2026-01-05)
+
+
+### Bug Fixes
+
+* chain goreleaser after semantic-release in same workflow ([5cb0e08](https://github.com/keanuharrell/a9s/commit/5cb0e08739318f711449d14c4e34bfa4f3380c3f))
+
 ## [0.2.3](https://github.com/keanuharrell/a9s/compare/v0.2.2...v0.2.3) (2026-01-05)
 
 
