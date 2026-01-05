@@ -1,50 +1,54 @@
 name: Test
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: 'stable'  # Go 1.24.6 (August 2025)
-        
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-        
-    - name: Download dependencies
-      run: go mod download
-        
-    - name: Verify dependencies
-      run: go mod verify
-        
-    - name: Build
-      run: go build -v ./...
-        
-    - name: Test
-      run: go test -v ./...
-      
-    - name: Test CLI commands
-      run: |
-        go run . --help
-        go run . ec2 --help
-        go run . iam --help  
-        go run . s3 --help
-        
-  build-cross-platform:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  build-matrix:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -54,31 +58,15 @@ jobs:
           - goos: windows
             goarch: arm64
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: 'stable'  # Go 1.24.6 (August 2025)
-        
-    - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
-      env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
-      run: |
-        go build -o a9s-${{ matrix.goos }}-${{ matrix.goarch }} .
-        
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: 'stable'  # Go 1.24.6 (August 2025)
-        
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v9
-      with:
-        version: latest
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -o a9s-${{ matrix.goos }}-${{ matrix.goarch }} .

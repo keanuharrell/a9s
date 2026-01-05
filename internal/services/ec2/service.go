@@ -388,13 +388,13 @@ func extractRegionFromAZ(az string) string {
 func filterKeyToAWS(key string) string {
 	// Map common filter keys to AWS filter names
 	filterMap := map[string]string{
-		"state":         "instance-state-name",
-		"type":          "instance-type",
-		"vpc":           "vpc-id",
-		"subnet":        "subnet-id",
-		"az":            "availability-zone",
-		"architecture":  "architecture",
-		"platform":      "platform",
+		"state":        "instance-state-name",
+		"type":         "instance-type",
+		"vpc":          "vpc-id",
+		"subnet":       "subnet-id",
+		"az":           "availability-zone",
+		"architecture": "architecture",
+		"platform":     "platform",
 	}
 
 	if awsKey, ok := filterMap[key]; ok {

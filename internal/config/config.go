@@ -72,10 +72,10 @@ type TUIConfig struct {
 
 // ServicesConfig configures which services are enabled.
 type ServicesConfig struct {
-	Enabled []string               `mapstructure:"enabled"`
-	EC2     map[string]any         `mapstructure:"ec2"`
-	IAM     map[string]any         `mapstructure:"iam"`
-	S3      map[string]any         `mapstructure:"s3"`
+	Enabled []string                  `mapstructure:"enabled"`
+	EC2     map[string]any            `mapstructure:"ec2"`
+	IAM     map[string]any            `mapstructure:"iam"`
+	S3      map[string]any            `mapstructure:"s3"`
 	Custom  map[string]map[string]any `mapstructure:"custom"`
 }
 
@@ -144,7 +144,7 @@ type CORSConfig struct {
 
 // LoggingConfig configures logging.
 type LoggingConfig struct {
-	Level  string `mapstructure:"level"` // debug, info, warn, error
+	Level  string `mapstructure:"level"`  // debug, info, warn, error
 	Format string `mapstructure:"format"` // text, json
 	File   string `mapstructure:"file"`
 }

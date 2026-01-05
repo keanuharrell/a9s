@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -11,59 +11,77 @@ permissions:
   packages: write
 
 jobs:
+  # First, run tests
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Test
+        run: go test -v ./...
+
+      - name: Build
+        run: go build -v ./...
+
+  # Semantic versioning and release
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      new_release: ${{ steps.semantic.outputs.new_release_published }}
+      new_version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 23
+          extra_plugins: |
+            @semantic-release/changelog@6
+            @semantic-release/git@10
+            conventional-changelog-conventionalcommits@7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build and publish with GoReleaser (only if new version)
   goreleaser:
+    needs: release
+    if: needs.release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 'stable'  # Go 1.24.6 (August 2025)
-          
+          go-version: 'stable'
+
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3.4.0  # Latest v3 release
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Set up Snapcraft
-        run: |
-          sudo snap install snapcraft --classic
-          
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: v2.11.2  # Latest stable GoReleaser LTS (July 2025)
+          version: '~> v2'
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
-          
-  test-install:
-    needs: goreleaser
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    steps:
-      - name: Test installation (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          # Download and test binary
-          wget https://github.com/${{ github.repository }}/releases/latest/download/a9s_*_linux_amd64.tar.gz
-          tar -xzf a9s_*.tar.gz
-          ./a9s --version
-          
-      - name: Test installation (macOS)  
-        if: matrix.os == 'macos-latest'
-        run: |
-          # Download and test binary
-          wget https://github.com/${{ github.repository }}/releases/latest/download/a9s_*_darwin_amd64.tar.gz
-          tar -xzf a9s_*.tar.gz
-          ./a9s --version

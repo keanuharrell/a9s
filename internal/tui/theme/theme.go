@@ -14,13 +14,13 @@ import (
 // Theme contains all styles for the TUI.
 type Theme struct {
 	// Colors
-	PrimaryColor   lipgloss.Color
-	SecondaryColor lipgloss.Color
-	AccentColor    lipgloss.Color
-	ErrorColor     lipgloss.Color
-	WarningColor   lipgloss.Color
-	SuccessColor   lipgloss.Color
-	MutedColor     lipgloss.Color
+	PrimaryColor    lipgloss.Color
+	SecondaryColor  lipgloss.Color
+	AccentColor     lipgloss.Color
+	ErrorColor      lipgloss.Color
+	WarningColor    lipgloss.Color
+	SuccessColor    lipgloss.Color
+	MutedColor      lipgloss.Color
 	BackgroundColor lipgloss.Color
 
 	// Layout styles

@@ -574,7 +574,7 @@ func (a *App) renderFooter() string {
 
 	style := lipgloss.NewStyle().
 		Foreground(a.theme.MutedColor).
-		Width(a.width - 2).
+		Width(a.width-2).
 		Padding(0, 1).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderTop(true).
@@ -614,8 +614,8 @@ Lambda: [i]nvoke [c]onfig
 Press [?] or [Esc] to close.`
 
 	style := lipgloss.NewStyle().
-		Width(a.width - 4).
-		Height(a.height - 2).
+		Width(a.width-4).
+		Height(a.height-2).
 		Padding(1, 2).
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(a.theme.AccentColor)

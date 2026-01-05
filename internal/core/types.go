@@ -116,10 +116,10 @@ const (
 
 // ResourceUpdate represents an update to resources during progressive loading.
 type ResourceUpdate struct {
-	Type      UpdateType  // Batch or single update
-	Resources []Resource  // For batch updates
-	Resource  *Resource   // For single updates
-	Index     int         // Index of the resource being updated
+	Type      UpdateType // Batch or single update
+	Resources []Resource // For batch updates
+	Resource  *Resource  // For single updates
+	Index     int        // Index of the resource being updated
 }
 
 // =============================================================================
@@ -209,12 +209,12 @@ const (
 	EventPluginError    EventType = "plugin.error"
 
 	// Config events
-	EventConfigChanged EventType = "config.changed"
+	EventConfigChanged  EventType = "config.changed"
 	EventConfigReloaded EventType = "config.reloaded"
 
 	// TUI events
-	EventViewChanged  EventType = "view.changed"
-	EventViewRefresh  EventType = "view.refresh"
+	EventViewChanged EventType = "view.changed"
+	EventViewRefresh EventType = "view.refresh"
 
 	// General events
 	EventError   EventType = "error"

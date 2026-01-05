@@ -35,12 +35,12 @@ var (
 	ErrConfirmationRequired = errors.New("confirmation required for dangerous action")
 
 	// Plugin errors
-	ErrPluginNotFound        = errors.New("plugin not found")
-	ErrPluginAlreadyLoaded   = errors.New("plugin already loaded")
-	ErrPluginLoadFailed      = errors.New("plugin load failed")
-	ErrPluginInitFailed      = errors.New("plugin initialization failed")
+	ErrPluginNotFound          = errors.New("plugin not found")
+	ErrPluginAlreadyLoaded     = errors.New("plugin already loaded")
+	ErrPluginLoadFailed        = errors.New("plugin load failed")
+	ErrPluginInitFailed        = errors.New("plugin initialization failed")
 	ErrPluginDependencyMissing = errors.New("plugin dependency missing")
-	ErrInvalidPluginManifest = errors.New("invalid plugin manifest")
+	ErrInvalidPluginManifest   = errors.New("invalid plugin manifest")
 
 	// Configuration errors
 	ErrConfigNotFound   = errors.New("configuration not found")
@@ -48,17 +48,17 @@ var (
 	ErrConfigReadFailed = errors.New("failed to read configuration")
 
 	// Container errors
-	ErrDependencyNotFound  = errors.New("dependency not found")
-	ErrCircularDependency  = errors.New("circular dependency detected")
-	ErrInvalidFactory      = errors.New("invalid factory function")
-	ErrResolutionFailed    = errors.New("dependency resolution failed")
+	ErrDependencyNotFound = errors.New("dependency not found")
+	ErrCircularDependency = errors.New("circular dependency detected")
+	ErrInvalidFactory     = errors.New("invalid factory function")
+	ErrResolutionFailed   = errors.New("dependency resolution failed")
 
 	// AWS errors
-	ErrAWSConfigFailed    = errors.New("failed to load AWS configuration")
-	ErrAWSCredentials     = errors.New("AWS credentials error")
-	ErrAWSPermission      = errors.New("AWS permission denied")
-	ErrAWSRateLimit       = errors.New("AWS rate limit exceeded")
-	ErrAWSServiceError    = errors.New("AWS service error")
+	ErrAWSConfigFailed = errors.New("failed to load AWS configuration")
+	ErrAWSCredentials  = errors.New("AWS credentials error")
+	ErrAWSPermission   = errors.New("AWS permission denied")
+	ErrAWSRateLimit    = errors.New("AWS rate limit exceeded")
+	ErrAWSServiceError = errors.New("AWS service error")
 
 	// General errors
 	ErrNotImplemented = errors.New("not implemented")
