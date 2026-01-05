@@ -7,6 +7,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force GoReleaser on current tag'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -30,19 +35,23 @@ jobs:
       - name: Build
         run: go build -v ./...
 
-  # Semantic versioning (only on main branch, not tags)
+  # Semantic versioning (only on main branch push)
   semantic-release:
     needs: test
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      new_release: ${{ steps.semantic.outputs.new_release_published }}
+      new_version: ${{ steps.semantic.outputs.new_release_version }}
+      new_tag: ${{ steps.semantic.outputs.new_release_git_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Semantic Release
+        id: semantic
         uses: cycjimmy/semantic-release-action@v4
         with:
           semantic_version: 23
@@ -53,16 +62,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # GoReleaser runs ONLY on tag push (triggered by semantic-release)
+      - name: Release Info
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          echo "New release: ${{ steps.semantic.outputs.new_release_version }}"
+          echo "Tag: ${{ steps.semantic.outputs.new_release_git_tag }}"
+
+  # GoReleaser - runs after semantic-release creates a new version OR on tag push
   goreleaser:
-    needs: test
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, semantic-release]
+    if: |
+      always() &&
+      needs.test.result == 'success' &&
+      (
+        (needs.semantic-release.result == 'success' && needs.semantic-release.outputs.new_release == 'true') ||
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.force_release == 'true')
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ needs.semantic-release.outputs.new_tag || github.ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
