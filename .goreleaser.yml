@@ -3,7 +3,6 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
 
 builds:
   - id: a9s
@@ -45,83 +44,23 @@ snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
-      - '^chore:'
-      - 'README'
-  groups:
-    - title: 'Features'
-      regexp: '^feat:'
-      order: 0
-    - title: 'Bug Fixes'
-      regexp: '^fix:'
-      order: 1
-    - title: 'Others'
-      order: 999
+  disable: true  # semantic-release handles changelog
 
-# Homebrew formula configuration
+release:
+  prerelease: auto
+  mode: append  # Append assets to existing release
+
+# Homebrew tap
 brews:
   - repository:
       owner: keanuharrell
       name: homebrew-a9s
       token: "{{ .Env.GITHUB_TOKEN }}"
     homepage: "https://github.com/keanuharrell/a9s"
-    description: "The k9s for AWS - Interactive Terminal UI for AWS infrastructure management"
+    description: "The k9s for AWS - Interactive Terminal UI for AWS"
     license: "MIT"
     skip_upload: auto
-    test: |
-      system "#{bin}/a9s --version"
     install: |
       bin.install "a9s"
-    dependencies:
-      - name: git
-        type: optional
-
-# Docker images
-dockers:
-  - image_templates:
-      - "ghcr.io/keanuharrell/a9s:{{ .Version }}-amd64"
-      - "ghcr.io/keanuharrell/a9s:latest-amd64"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - --platform=linux/amd64
-      - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.description=Interactive Terminal UI for AWS infrastructure management
-      - --label=org.opencontainers.image.url=https://github.com/keanuharrell/a9s
-      - --label=org.opencontainers.image.source=https://github.com/keanuharrell/a9s
-      - --label=org.opencontainers.image.version={{ .Version }}
-      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
-      - --label=org.opencontainers.image.revision={{ .FullCommit }}
-      - --label=org.opencontainers.image.licenses=MIT
-    goarch: amd64
-
-  - image_templates:
-      - "ghcr.io/keanuharrell/a9s:{{ .Version }}-arm64"
-      - "ghcr.io/keanuharrell/a9s:latest-arm64"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - --platform=linux/arm64
-      - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.description=Interactive Terminal UI for AWS infrastructure management
-      - --label=org.opencontainers.image.url=https://github.com/keanuharrell/a9s
-      - --label=org.opencontainers.image.source=https://github.com/keanuharrell/a9s
-      - --label=org.opencontainers.image.version={{ .Version }}
-      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
-      - --label=org.opencontainers.image.revision={{ .FullCommit }}
-      - --label=org.opencontainers.image.licenses=MIT
-    goarch: arm64
-
-docker_manifests:
-  - name_template: "ghcr.io/keanuharrell/a9s:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/keanuharrell/a9s:{{ .Version }}-amd64"
-      - "ghcr.io/keanuharrell/a9s:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/keanuharrell/a9s:latest"
-    image_templates:
-      - "ghcr.io/keanuharrell/a9s:latest-amd64"
-      - "ghcr.io/keanuharrell/a9s:latest-arm64"
+    test: |
+      system "#{bin}/a9s", "--version"
