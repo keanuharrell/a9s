@@ -4,6 +4,14 @@
 ### Bug Fixes
 
 * remove docker builds from goreleaser config ([866c4dc](https://github.com/keanuharrell/a9s/commit/866c4dce3cb62473555f2610fb410413e27a7c96))
+* trigger release pipeline ([e3d9ebd](https://github.com/keanuharrell/a9s/commit/e3d9ebd1fb27d03cd2ba495207f1b4890193675a))
+
+## [0.2.5](https://github.com/keanuharrell/a9s/compare/v0.2.4...v0.2.5) (2026-01-05)
+
+
+### Bug Fixes
+
+* remove docker builds from goreleaser config ([866c4dc](https://github.com/keanuharrell/a9s/commit/866c4dce3cb62473555f2610fb410413e27a7c96))
 
 ## [0.2.4](https://github.com/keanuharrell/a9s/compare/v0.2.3...v0.2.4) (2026-01-05)
 
