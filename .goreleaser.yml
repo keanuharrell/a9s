@@ -55,7 +55,7 @@ brews:
   - repository:
       owner: keanuharrell
       name: homebrew-a9s
-      token: "{{ .Env.GITHUB_TOKEN }}"
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://github.com/keanuharrell/a9s"
     description: "The k9s for AWS - Interactive Terminal UI for AWS"
     license: "MIT"
