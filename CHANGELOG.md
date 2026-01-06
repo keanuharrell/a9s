@@ -1,3 +1,10 @@
+## [0.2.6](https://github.com/keanuharrell/a9s/compare/v0.2.5...v0.2.6) (2026-01-06)
+
+
+### Bug Fixes
+
+* use dedicated token for Homebrew tap ([107c960](https://github.com/keanuharrell/a9s/commit/107c960437904d1535b8528e68be7b35f87abbcc))
+
 ## [0.2.5](https://github.com/keanuharrell/a9s/compare/v0.2.4...v0.2.5) (2026-01-05)
 
 
