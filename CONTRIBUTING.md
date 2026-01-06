@@ -11,7 +11,6 @@ Please be respectful and constructive in all interactions.
 ### Prerequisites
 
 - Go 1.21 or higher
-- Docker (for testing Docker builds)
 - Make
 - Git
 
@@ -25,17 +24,17 @@ Please be respectful and constructive in all interactions.
 
 2. Install dependencies:
    ```bash
-   make deps
+   go mod download
    ```
 
-3. Install development tools and git hooks:
-   ```bash
-   make setup-hooks
-   ```
-
-4. Build the project:
+3. Build the project:
    ```bash
    make build
+   ```
+
+4. Run the application:
+   ```bash
+   ./a9s
    ```
 
 ## Development Workflow
@@ -51,14 +50,9 @@ Please be respectful and constructive in all interactions.
 
 3. Run the automated checks:
    ```bash
-   make pre-commit
+   make lint
+   make test
    ```
-
-   This will:
-   - Format your code (`gofmt`, `goimports`)
-   - Run linters (`golangci-lint`)
-   - Run all tests
-   - Check for security issues
 
 ### Running Tests
 
@@ -66,58 +60,49 @@ Please be respectful and constructive in all interactions.
 # Run all tests
 make test
 
-# Run tests with coverage
-make test-coverage
+# Run tests with verbose output
+go test -v ./...
 
 # Run tests for a specific package
-go test ./internal/aws/... -v
+go test ./internal/services/ec2/... -v
 ```
 
 ### Code Style
 
 - Follow standard Go conventions
-- Use `gofmt` and `goimports` for formatting (done automatically by `make fmt`)
+- Use `gofmt` for formatting
 - Keep functions small and focused
 - Write meaningful commit messages
 - Add tests for new features
-- Update documentation when needed
 
-### Commit Message Guidelines
+## Commit Message Guidelines
 
-We follow conventional commits format:
+We use [Conventional Commits](https://www.conventionalcommits.org/) with automatic semantic versioning:
 
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-**Types:**
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `test:` Adding or updating tests
-- `refactor:` Code refactoring
-- `chore:` Maintenance tasks
+| Type | Description | Version Bump |
+|------|-------------|--------------|
+| `feat:` | New feature | Minor (0.X.0) |
+| `fix:` | Bug fix | Patch (0.0.X) |
+| `docs:` | Documentation | None |
+| `refactor:` | Code refactoring | Patch |
+| `test:` | Adding tests | None |
+| `chore:` | Maintenance | None |
+| `BREAKING CHANGE:` | Breaking change | Major (X.0.0) |
 
 **Examples:**
 ```
-feat(ec2): add support for instance tagging
-fix(s3): correct bucket deletion logic
-docs(readme): update installation instructions
-test(iam): add tests for role assessment
+feat(lambda): add function invocation support
+fix(ec2): correct instance state display
+docs: update keyboard shortcuts
+refactor(tui): simplify view rendering
 ```
 
-### Pull Request Process
+## Pull Request Process
 
-1. Update the README.md or documentation if needed
-2. Add tests for new features
-3. Ensure all tests pass: `make test`
-4. Ensure linting passes: `make lint`
-5. Update CHANGELOG.md with your changes
-6. Submit a pull request
+1. Ensure all tests pass: `make test`
+2. Ensure linting passes: `make lint`
+3. Update documentation if needed
+4. Submit a pull request
 
 ### Pull Request Checklist
 
@@ -125,134 +110,79 @@ test(iam): add tests for role assessment
 - [ ] Tests added/updated and passing
 - [ ] Documentation updated if needed
 - [ ] Commit messages follow conventional commits
-- [ ] No merge conflicts
 - [ ] All CI checks passing
 
 ## Project Structure
 
 ```
 a9s/
-├── cmd/              # CLI commands and root command
+├── cmd/                    # CLI entry point
+│   └── root.go             # Main command setup
 ├── internal/
-│   ├── aws/          # AWS service integrations (EC2, IAM, S3)
-│   └── tui/          # Terminal UI components
-├── scripts/          # Build and utility scripts
-├── man/              # Man pages
-├── .github/          # GitHub Actions workflows
-├── Makefile          # Build automation
-└── .goreleaser.yml   # Release configuration
+│   ├── core/               # Core interfaces and types
+│   ├── config/             # Configuration loading
+│   ├── container/          # Dependency injection
+│   ├── registry/           # Service registry
+│   ├── hooks/              # Event hooks system
+│   ├── services/           # AWS service implementations
+│   │   ├── base/           # Base view components
+│   │   ├── ec2/            # EC2 service & view
+│   │   ├── iam/            # IAM service & view
+│   │   ├── s3/             # S3 service & view
+│   │   └── lambda/         # Lambda service & view
+│   ├── tui/                # Terminal UI
+│   │   ├── app.go          # Main TUI application
+│   │   ├── theme/          # UI theming
+│   │   └── components/     # Reusable UI components
+│   └── aws/                # AWS client factory
+├── .github/workflows/      # CI/CD pipelines
+├── .goreleaser.yml         # Release configuration
+└── .releaserc.json         # Semantic release config
 ```
 
 ## Adding New Features
 
 ### Adding a New AWS Service
 
-1. Create a new file in `internal/aws/`:
-   ```bash
-   touch internal/aws/newservice.go
-   touch internal/aws/newservice_test.go
+1. Create service implementation in `internal/services/newservice/`:
+   ```
+   internal/services/newservice/
+   ├── service.go    # AWS API interactions
+   └── view.go       # TUI view
    ```
 
-2. Implement the service following existing patterns
-3. Add CLI command in `cmd/`
-4. Add TUI view in `internal/tui/`
+2. Implement the `core.AWSService` interface
+3. Implement the `core.View` interface
+4. Register the service in `cmd/root.go`
 5. Add tests
 6. Update documentation
 
-### Adding New Commands
+### Architecture Principles
 
-1. Create command file in `cmd/`:
-   ```go
-   // cmd/newcmd.go
-   package cmd
-
-   import "github.com/spf13/cobra"
-
-   var newCmd = &cobra.Command{
-       Use:   "newcmd",
-       Short: "Description",
-       RunE: func(cmd *cobra.Command, args []string) error {
-           // Implementation
-           return nil
-       },
-   }
-
-   func init() {
-       rootCmd.AddCommand(newCmd)
-   }
-   ```
-
-2. Add tests in `cmd/newcmd_test.go`
-3. Update man pages: `make man`
-
-## Testing
-
-### Unit Tests
-
-Write unit tests for all new code:
-
-```go
-func TestNewFeature(t *testing.T) {
-    tests := []struct {
-        name     string
-        input    string
-        expected string
-    }{
-        {"case 1", "input", "output"},
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            result := NewFeature(tt.input)
-            if result != tt.expected {
-                t.Errorf("got %v, want %v", result, tt.expected)
-            }
-        })
-    }
-}
-```
-
-### Integration Tests
-
-For AWS integration tests, use mocks or require AWS credentials:
-
-```go
-func TestEC2Integration(t *testing.T) {
-    if testing.Short() {
-        t.Skip("Skipping integration test")
-    }
-    // Test with real AWS API
-}
-```
-
-Run without integration tests:
-```bash
-go test -short ./...
-```
+- **Interface-driven**: All services implement `core.AWSService`
+- **Dependency injection**: Services receive dependencies via constructor
+- **Event-based**: Use hooks for cross-cutting concerns
+- **Separation of concerns**: Service logic separate from TUI rendering
 
 ## Release Process
 
-Releases are automated via GitHub Actions when a tag is pushed:
+Releases are **fully automatic** via semantic-release:
 
-1. Update version and changelog
-2. Create and push a tag:
-   ```bash
-   git tag -a v1.0.0 -m "Release v1.0.0"
-   git push origin v1.0.0
-   ```
+1. Push commits to `main` branch
+2. semantic-release analyzes commit messages
+3. If releasable changes exist:
+   - Version is bumped automatically
+   - CHANGELOG.md is updated
+   - GitHub release is created
+   - Binaries are built and uploaded
+   - Homebrew formula is updated
 
-3. GitHub Actions will:
-   - Build binaries for all platforms
-   - Generate checksums
-   - Create Docker images
-   - Publish to GitHub releases
-   - Update Homebrew formula
+**No manual tagging required!**
 
 ## Getting Help
 
 - Open an issue for bugs or feature requests
-- Start a discussion for questions
-- Check existing issues and PRs before creating new ones
+- Check existing issues before creating new ones
 
 ## License
 

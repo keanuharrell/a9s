@@ -1,29 +1,35 @@
-# a9s 🚀
+# a9s
 
-**The k9s for AWS** - An interactive Terminal UI for AWS infrastructure management written in Go.
+**The k9s for AWS** - An interactive Terminal UI for AWS infrastructure management.
 
-## What is a9s?
+![Go Version](https://img.shields.io/github/go-mod/go-version/keanuharrell/a9s)
+![License](https://img.shields.io/github/license/keanuharrell/a9s)
+![Release](https://img.shields.io/github/v/release/keanuharrell/a9s)
 
-a9s brings the intuitive k9s experience to AWS! Navigate your AWS infrastructure with an interactive Terminal UI that makes managing EC2, IAM, and S3 resources as smooth as managing Kubernetes with k9s.
+## Overview
 
-**✨ Key Features:**
-- 🖥️ **Interactive TUI** - Real-time, navigable interface (just run `a9s`)
-- ⚡ **CLI Mode** - Traditional command-line interface (`a9s ec2 list`, etc.)
-- 🔄 **Auto-refresh** - Live updates every 5 seconds
-- 🎯 **Multi-service** - EC2, IAM, S3 in one tool
-- 🎨 **Beautiful UI** - Powered by BubbleTea with colors and tables
+a9s brings the intuitive [k9s](https://k9scli.io/) experience to AWS. Navigate your AWS infrastructure with a beautiful Terminal UI that makes managing cloud resources simple and efficient.
 
 ## Features
 
-- **EC2 Management**: List and monitor EC2 instances across regions
-- **IAM Security Auditing**: Identify high-risk roles and permissions
-- **S3 Bucket Cleanup**: Find and remove empty or untagged buckets
-- **Multi-format Output**: JSON or table format for all commands
-- **AWS Profile Support**: Work with multiple AWS accounts seamlessly
+- **Interactive TUI** - Real-time, keyboard-driven interface
+- **Multi-Service Support** - EC2, IAM, S3, Lambda in one tool
+- **Profile & Region Switching** - Switch AWS profiles and regions on the fly
+- **Auto-refresh** - Live updates for resource status
+- **Keyboard-First** - Navigate entirely with keyboard shortcuts
+
+### Supported Services
+
+| Service | Features |
+|---------|----------|
+| **EC2** | List instances, start/stop/reboot, view status |
+| **IAM** | List roles, security analysis, permission auditing |
+| **S3** | List buckets, analyze storage, delete empty buckets |
+| **Lambda** | List functions, view configuration, invoke functions |
 
 ## Installation
 
-### Homebrew (Recommended for macOS)
+### Homebrew (macOS/Linux)
 
 ```bash
 brew tap keanuharrell/a9s
@@ -39,175 +45,130 @@ go build -o a9s .
 sudo mv a9s /usr/local/bin/
 ```
 
-### Using Docker
+### Go Install
 
 ```bash
-docker build -t a9s .
-docker run --rm -v ~/.aws:/root/.aws a9s --help
-```
-
-### Package Managers
-
-```bash
-# Snap (Linux)
-snap install a9s
-
-# Go Install
 go install github.com/keanuharrell/a9s@latest
 ```
 
+### Download Binary
+
+Download the latest release from [GitHub Releases](https://github.com/keanuharrell/a9s/releases).
+
 ## Usage
 
-### 🖥️ Interactive TUI Mode (Recommended)
-
-Launch the beautiful Terminal UI:
 ```bash
-a9s                    # Launch TUI with default profile
-a9s --profile prod     # Use specific AWS profile  
-a9s --region eu-west-1 # Use specific region
+# Launch TUI with default profile
+a9s
+
+# Use specific AWS profile
+a9s --profile production
+
+# Use specific region
+a9s --region eu-west-1
+
+# Combine options
+a9s --profile prod --region us-east-1
 ```
 
-**TUI Navigation:**
-- `[1,2,3]` - Switch between EC2, IAM, S3 views
-- `[↑↓]` - Navigate items in current view  
-- `[Enter]` - View details
-- `[r]` - Refresh current view
-- `[s/t]` - Start/Stop EC2 instances (demo)
-- `[q]` - Quit
-- `[?]` - Help
+## Keyboard Shortcuts
 
-### ⚡ CLI Mode
+### Global
 
-#### EC2 Commands
+| Key | Action |
+|-----|--------|
+| `1` | Switch to EC2 view |
+| `2` | Switch to IAM view |
+| `3` | Switch to S3 view |
+| `4` | Switch to Lambda view |
+| `p` | Change AWS profile |
+| `R` | Change AWS region |
+| `r` | Refresh current view |
+| `q` / `Ctrl+C` | Quit |
 
-List all EC2 instances:
-```bash
-a9s ec2 list
-a9s ec2 list --region us-west-2
-a9s ec2 list --profile production --output json
-```
+### Navigation
 
-#### IAM Commands
+| Key | Action |
+|-----|--------|
+| `↑` / `k` | Move up |
+| `↓` / `j` | Move down |
+| `Enter` | Select / View details |
 
-Audit IAM roles for security risks:
-```bash
-a9s iam audit
-a9s iam audit --output json
-a9s iam audit --profile security-audit
-```
+### Service-Specific
 
-### S3 Commands
+**EC2:**
+| Key | Action |
+|-----|--------|
+| `s` | Start instance |
+| `t` | Stop instance |
+| `b` | Reboot instance |
 
-Analyze and cleanup S3 buckets:
-```bash
-a9s s3 cleanup --dry-run
-a9s s3 cleanup --output json
-a9s s3 cleanup  # Actually delete buckets (use with caution!)
-```
+**S3:**
+| Key | Action |
+|-----|--------|
+| `a` | Analyze bucket |
+| `d` | Delete bucket |
 
-## Global Flags
-
-- `--profile`: AWS profile to use (from ~/.aws/credentials)
-- `--region`: AWS region (overrides default region)
-- `--output`: Output format (json|table) - default: table
-- `--dry-run`: Simulate actions without making changes
-- `--config`: Path to configuration file (optional)
+**Lambda:**
+| Key | Action |
+|-----|--------|
+| `i` | Invoke function |
 
 ## Configuration
 
-a9s uses standard AWS credentials. Configure your credentials using:
+a9s uses standard AWS credentials from `~/.aws/credentials` and `~/.aws/config`.
 
 ```bash
+# Configure AWS credentials
 aws configure
-# or
+
+# Or set environment variables
 export AWS_PROFILE=your-profile
 export AWS_REGION=us-east-1
 ```
 
-## Examples
+### Optional Config File
 
-### Find all running EC2 instances in JSON format
-```bash
-a9s ec2 list --output json | jq '.[] | select(.state == "running")'
+Create `~/.config/a9s/config.yaml`:
+
+```yaml
+defaults:
+  profile: default
+  region: us-east-1
+
+services:
+  - ec2
+  - iam
+  - s3
+  - lambda
 ```
 
-### Audit IAM roles and save results
-```bash
-a9s iam audit --output json > iam-audit-report.json
-```
+## Requirements
 
-### Preview S3 cleanup without deleting
-```bash
-a9s s3 cleanup --dry-run
-```
-
-## Building
-
-### Requirements
-- Go 1.21 or higher
 - AWS credentials configured
-
-### Build for current platform
-```bash
-go build -o a9s .
-```
-
-### Cross-compile for different platforms
-```bash
-# Linux
-GOOS=linux GOARCH=amd64 go build -o a9s-linux-amd64
-
-# macOS
-GOOS=darwin GOARCH=amd64 go build -o a9s-darwin-amd64
-GOOS=darwin GOARCH=arm64 go build -o a9s-darwin-arm64
-
-# Windows
-GOOS=windows GOARCH=amd64 go build -o a9s-windows-amd64.exe
-```
-
-## Docker
-
-Build the Docker image:
-```bash
-docker build -t a9s .
-```
-
-Run with AWS credentials:
-```bash
-docker run --rm \
-  -v ~/.aws:/root/.aws:ro \
-  -e AWS_PROFILE=default \
-  a9s ec2 list
-```
+- Go 1.21+ (for building from source)
 
 ## Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit using [Conventional Commits](https://www.conventionalcommits.org/):
+   - `feat:` for new features (triggers minor version bump)
+   - `fix:` for bug fixes (triggers patch version bump)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
 ## Security
 
 - Never commit AWS credentials
-- Use IAM roles when running on EC2
-- Always use `--dry-run` before destructive operations
-- Review IAM audit results regularly
+- Use IAM roles with least privilege
+- Use `--dry-run` before destructive operations
+- Report security issues via GitHub Security Advisories
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Author
 
-Keanu Harrell
-
-## Roadmap
-
-- [ ] Support for more AWS services (RDS, Lambda, etc.)
-- [ ] Configuration file support for default settings
-- [ ] Interactive mode for complex operations
-- [ ] Cost analysis features
-- [ ] Multi-cloud support (Azure, GCP)
-- [ ] Automated remediation for common issues
+[Keanu Harrell](https://github.com/keanuharrell)
